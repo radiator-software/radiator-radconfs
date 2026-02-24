@@ -1,0 +1,371 @@
+# 50_policies.radconf
+#
+# Radiator policy configuration
+# Local authentication is used for example.com realm
+# all other realms are proxied
+#
+
+aaa {
+
+    # First matching policy is selected
+    # Policy for authenticating local user and proxying roaming uses
+    policy "AUTHENTICATIONS" {
+        conditions all {
+            # Match all authentication requests
+            radius.request.code == radius.ACCESS_REQUEST;
+        }
+        # First matching handler is selected to handle the received request
+        # Policy should not get accounting requests, but handlers anyway accept and log it
+
+        # Reject usernames with whitespaces
+        handler "REJECT_INVALID_USERNAMES" {
+            conditions any {
+                aaa.identity == /\s+/;
+            }
+            @execute {
+                if all {
+                    radius.request.code == radius.ACCOUNTING_REQUEST;
+                } then {
+                    accept;
+                } else {
+                    reason "reject_invalid_usernames: Username contains invalid characters.";
+                    reject;
+                }
+            }
+            @final-execute {
+                if all {
+                    radius.request.code == radius.ACCOUNTING_REQUEST;
+                } then {
+                    invoke "LOG_ACCOUNTING";
+                } else {
+                    invoke "LOG_AUTHENTICATION";
+                }
+            }
+        }
+
+        # Reject if there is no realm or if the realm contains whitespaces
+        handler "REJECT_INVALID_REALMS" {
+            conditions any {
+                aaa.identity.realm == none;
+                aaa.identity.realm == /\s+/;
+            }
+            @execute {
+                if all {
+                    radius.request.code == radius.ACCOUNTING_REQUEST;
+                } then {
+                    accept;
+                } else {
+                    reason "reject_invalid_realms: Realm contains invalid characters.";
+                    reject;
+                }
+            }
+            @final-execute {
+                if all {
+                    radius.request.code == radius.ACCOUNTING_REQUEST;
+                } then {
+                    invoke "LOG_ACCOUNTING";
+                } else {
+                    invoke "LOG_AUTHENTICATION";
+                }
+            }
+        }
+
+        # Handler for local RADIUS authentication
+        handler "LOCAL_AUTHENTICATION" {
+            conditions all {
+                # Match only RADIUS authentication requests
+                # from realm "example.com"
+                radius.request.code == radius.ACCESS_REQUEST;
+                aaa.identity.realm == "example.com";
+            }
+
+            @execute {
+                eap {
+                    # EAP-TLS client authentication
+                    eap-tls {
+                        tls {
+                            # EAP server private key
+                            certificate_key "EAP_SERVER_KEY";
+
+                            # EAP server certificate chain
+                            certificate "EAP_SERVER_CERT";
+
+                            # CA certificate for verifying EAP-TLS
+                            # client certificates
+                            client_ca_certificate "EAP_SERVER_CLIENT_CA";
+
+                            # Use CA certificate directory certificates for
+                            # client certificate validation
+                            #client_ca_certificate "EAP_SERVER_CLIENT_CA_DIRECTORY";
+
+                            # (Optional) Client certificate's verification policy
+                            @verification {
+                                # Reject the certificate if any of following conditions fails
+                                if any {
+                                    # Basic certification verification failed
+                                    cert.valid != true;
+                                    # Certificate has unacceptable user email
+                                    # The check could also be done e.g. against Subject or Issuer, like cert.subject.cn
+                                    cert.subject_alt.email starts "test";
+                                } then {
+                                    reject;
+                                } else {
+                                    accept;
+                                }
+                            }
+                        }
+
+                        # post-authentication can be used e.g. to pick up fields from the certificate to a variable for later use
+                        @post-authentication {
+                            # check if there is a SubjectAltName email
+                            if any {
+                                cert.subject_alt.email != none;
+                            }
+                            # copy the email to vars for logging
+                            # vars is available everywhere so it can be used in authorization with backend
+                            # instead of email, other Subject or Issuer fields can also be used like cert.subject.cn
+                            then {
+                                modify vars.certemail = cert.subject_alt.email;
+                            }
+
+                            # log authentication requests
+                            invoke "LOG_AUTHENTICATION";
+                        }
+                    }
+                }
+
+                # Authorization is done based on LDAP groups
+
+                # Optionally strip realm from parameter if parameter used when searching LDAP is without realm in LDAP
+                #rewrite aaa.identity /^([^@]+).*/ "$1";
+                #rewrite vars.certemail /^([^@]+).*/ "$1";
+
+                # Optionally search for user from LDAP
+                backend {
+                    name "ldap.example.com";
+                    query "find_user";
+                }
+
+                # Check is user has specific information on the database, if yes, return the information. If no, reject
+                backend {
+                    name "VLAN_DB";
+                    query BELONGS_TO_GROUP;
+                }
+
+                # The field on the database can be NULL or contain empty string
+                if none {
+                   vars.sqlgroup == none;
+                   vars.sqlgroup == "";
+                } then {
+                    modify {
+                        radius.reply.attr.Aruba-AirGroup-Shared-Group = vars.sqlgroup;
+                    }
+                } else {
+                    reject;
+                }
+
+
+                ## Optionally search for user groups from LDAP if they are not available in cache
+                #if any {
+                #    cache.groups[vars.certemail] != none;
+                #} then {
+                #    # Assign group from a cache
+                #    modify {
+                #        user.group = cache.groups[vars.certemail][*];
+                #    }
+                #} else {
+                #    # Search for user groups from backend "ldap.example.com"
+                #    backend {
+                #        name "ldap.example.com";
+                #        query "user_groups";
+                #    }
+                #    # Insert groups into a cache
+                #    modify {
+                #        cache.groups[vars.certemail] = user.group;
+                #    }
+                #}
+
+                ## Set VLAN attributes based on user's LDAP group
+                #map user.group {
+                #    "demo_group" => {
+                #         modify {
+                #             radius.reply.attr.Tunnel-Type:1 = "VLAN";
+                #             radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
+                #             # assign VLAN ID 125 to RADIUS attribute
+                #             radius.reply.attr.Tunnel-Private-Group-Id:1 = "125";
+                #         }
+                #    }
+                #    "admins_group" => {
+                #         modify {
+                #             radius.reply.attr.Tunnel-Type:1 = "VLAN";
+                #             radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
+                #             # assign VLAN ID 145 to RADIUS attribute
+                #             radius.reply.attr.Tunnel-Private-Group-Id:1 = "145";
+                #         }
+                #    }
+                #}
+
+                # Set VLAN attributes based on SQL search
+                backend {
+                    name "VLAN_DB";
+                    query GET_VLANS;
+                }
+
+                # Proceed only if the Tunnel-Private-Group-Id was found
+                # Tunnel-Type and Tunnel-Medium-Type may be fixed and not
+                # necessarily looked from the database
+                if none {
+                   vars.sqltid == none;
+                   vars.sqltid == "";
+                } then {
+                    modify {
+                        radius.reply.attr.Tunnel-Type:1 = vars.sqlttype;
+                        radius.reply.attr.Tunnel-Medium-Type:1 = vars.sqltmedium;
+                        radius.reply.attr.Tunnel-Private-Group-Id:1 = vars.sqltid;
+                    }
+                } else {
+                    # Optionally set fixed values if VLAN ID was not available
+                    modify {
+                        radius.reply.attr.Tunnel-Type:1 = "VLAN";
+                        radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
+                        radius.reply.attr.Tunnel-Private-Group-Id:1 = "909";
+                    }
+                }
+
+                # EXPLICITLY accept, if user's roles didn't match
+                # Use this if user should anyway be authenticated although they will not get assigned
+                # any VLAN attributes based on group
+                # Without this, authorization will reject everything by default, so user will get
+                # Access-Reject
+                #accept;
+            }
+
+            @final-execute {
+                invoke "LOG_AUTHENTICATION";
+            }
+        }
+
+        # Handler for proxying to Eduroam
+        handler "PROXY_TO_EDUROAM" {
+            # Match RADIUS authentication requests
+            # from any realm except "example.com"
+            # as long as they are not coming from the EDUROAM_TLS*
+            # client definitions. This is to avoid loop where request
+            # coming from eduroam is proxied back to eduroam
+            conditions none {
+                aaa.identity.realm == "example.com";
+                radius.client starts "EDUROAM_TLR";
+            }
+
+            # Proxy both authentication and accounting
+            @execute {
+                backend {
+                    name "RADSEC_PROXY_EXAMPLE";
+                    # timeout for whole authentication/accounting attempt
+                    #timeout 15000;
+                }
+            }
+
+            @final-execute {
+                if all {
+                    radius.request.code == radius.ACCOUNTING_REQUEST;
+                } then {
+                    invoke "LOG_ACCOUNTING";
+                } else {
+                    invoke "LOG_AUTHENTICATION";
+                }
+            }
+        }
+
+        # DEFAULT handler rejects all authentication, accepts accounting
+        handler "DEFAULT-AUTH" {
+            @execute {
+                if all {
+                    radius.request.code == radius.ACCOUNTING_REQUEST;
+                } then {
+                    accept;
+                } else {
+                    reason "DEFAULT: No other matching authentication handler found.";
+                    reject;
+                }
+            }
+            # Logging to both authentication and accounting logs as this handler
+            # should never trigger. If it does it indicates there is a case
+            # that should be handled properly with it's own handler.
+            @final-execute {
+                invoke "LOG_ACCOUNTING";
+                invoke "LOG_AUTHENTICATION";
+            }
+        }
+    }
+
+    policy "ACCOUNTING" {
+        conditions all {
+            # match all accounting requests
+            radius.request.code == radius.ACCOUNTING_REQUEST;
+        }
+
+        handler "ACCOUNTING" {
+            conditions all {
+                # match only RADIUS accounting requests
+                radius.request.code == radius.ACCOUNTING_REQUEST;
+            }
+
+            @execute {
+                # accept all accounting
+                accept;
+            }
+
+            # log all accounting
+            @final-execute {
+                invoke "LOG_ACCOUNTING";
+            }
+        }
+
+        # DEFAULT handler rejects all authentication, accepts accounting
+        handler "DEFAULT-ACCT" {
+            @execute {
+                if all {
+                    radius.request.code == radius.ACCOUNTING_REQUEST;
+                } then {
+                    accept;
+                } else {
+                    reason "DEFAULT: No other matching authentication handler found.";
+                    reject;
+                }
+            }
+            # Logging to both authentication and accounting logs as this handler
+            # should never trigger. If it does it indicates there is a case
+            # that should be handled properly with it's own handler.
+            @final-execute {
+                invoke "LOG_ACCOUNTING";
+                invoke "LOG_AUTHENTICATION";
+            }
+        }
+    }
+
+    # DEFAULT policy is to reject authentication and accept accounting
+    # matches if none of the previous policies match
+    policy "DEFAULT" {
+
+        # A policy without conditions will handle any request
+
+        # DEFAULT handler rejects all authentication, accepts accounting
+        handler "DEFAULT" {
+            @execute {
+                if all {
+                    radius.request.code == radius.ACCOUNTING_REQUEST;
+                } then {
+                    accept;
+                } else {
+                    reason "DEFAULT: No other matching authentication handler found.";
+                    reject;
+                }
+            }
+            @final-execute {
+                invoke "LOG_ACCOUNTING";
+                invoke "LOG_AUTHENTICATION";
+            }
+        }
+    }
+}

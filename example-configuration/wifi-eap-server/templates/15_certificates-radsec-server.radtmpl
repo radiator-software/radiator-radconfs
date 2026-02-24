@@ -1,0 +1,108 @@
+# radiator-config-template
+{
+  "description": "Upload and replace RadSec server certificates and keys",
+  "items": [
+    {
+      "id": "RADSEC_SERVER_CERT",
+      "label": "RadSec server certificate (chain) file",
+      "description": "RadSec server certificate (chain) file",
+      "type": "file_upload",
+      "file_type": "cert",
+      "path": "<root>/tls/certs",
+      "filename_id": "RADSEC_SERVER_CERT_FILE",
+      "placeholder": "RADSEC_SERVER_CERT",
+      "readOnly": true
+    },
+    {
+      "id": "RADSEC_SERVER_KEY",
+      "label": "RadSec server private key file",
+      "description": "RadSec server private key file",
+      "type": "file_upload",
+      "file_type": "key",
+      "path": "<root>/tls/keys",
+      "filename_id": "RADSEC_SERVER_KEY_FILE",
+      "placeholder": "RADSEC_SERVER_KEY",
+      "readOnly": true
+    },
+    {
+      "id": "RADSEC_SERVER_KEY_PASSWORD",
+      "label": "RadSec server private key password if any",
+      "description": "Password for RadSec server private key file in case the private key is password protected",
+      "type": "secret",
+      "optional": true
+    },
+    {
+      "id": "RADSEC_SERVER_CLIENT_CA_FILE",
+      "label": "RadSec server client CA certificate file",
+      "description": "The CA certificates, which is used to validate RadSec clients connecting to this server.",
+      "type": "file_upload",
+      "file_type": "cert",
+      "path": "<root>/tls/ca",
+      "filename_id": "RADSEC_SERVER_CLIENT_CA_FILE",
+      "placeholder": "RADSEC_SERVER_CLIENT_CA",
+      "readOnly": true,
+      "optional": true
+    },
+    {
+      "id": "RADSEC_SERVER_CLIENT_CA_DIRECTORY_PATH",
+      "label": "RadSec server client CA certificate directory",
+      "description": "Directory for uploading CA certificates, which are used to validate RadSec clients connecting to this server.",
+      "type": "file_upload",
+      "file_type": "cert_dir",
+      "path": "<root>/tls/ca",
+      "filename_id": "RADSEC_SERVER_CLIENT_CA_DIRECTORY_PATH",
+      "placeholder": "RADSEC_SERVER_CLIENT_CA",
+      "readOnly": true
+    },
+    {
+      "id": "RADSEC_SERVER_CLIENT_CA_DIRECTORY_REFRESH_INTERVAL",
+      "label": "RadSec server client CA certificate directory refresh interval",
+      "description": "The interval in milliseconds for checking the contents of RadSec server client CA certificate directory for new CA certificates. 30 min = 30*60*1000 = 1 800 000 milliseconds.",
+      "type": "string",
+      "placeholder": "1800000",
+      "optional": true
+    }
+  ]
+}
+# radiator-config-template
+# Certificates configuration generated from template
+#
+# Each certificate/key is uploaded to tls/certs, tls/key or tls/ca and
+# configured here. CA directories are stored under tls/ca.
+
+certificates {
+    {{#if RADSEC_SERVER_CERT_FILE}}
+    x509 "RADSEC_SERVER_CERT" {
+        filename "{{{RADSEC_SERVER_CERT_FILE}}}";
+    }
+    {{/if}}
+
+    {{#if RADSEC_SERVER_KEY_FILE}}
+    key "RADSEC_SERVER_KEY" {
+        filename "{{{RADSEC_SERVER_KEY_FILE}}}";
+        {{#if RADSEC_SERVER_KEY_PASSWORD}}
+        password "{{{RADSEC_SERVER_KEY_PASSWORD}}}";
+        {{/if}}
+    }
+    {{/if}}
+
+    {{#if RADSEC_SERVER_CLIENT_CA_FILE}}
+    x509 "RADSEC_SERVER_CLIENT_CA" {
+        filename "{{{RADSEC_SERVER_CLIENT_CA_FILE}}}";
+    }
+    {{/if}}
+
+    {{#if RADSEC_SERVER_CLIENT_CA_DIRECTORY_PATH}}
+    x509-directory "RADSEC_SERVER_CLIENT_CA_DIRECTORY" {
+        directory "{{{RADSEC_SERVER_CLIENT_CA_DIRECTORY_PATH}}}";
+        # The interval in milliseconds for checking the contents of RadSec
+        # server client CA certificate directory for new CA certificates.
+        # 30 min = 30*60*1000 = 1 800 000 milliseconds.
+        #interval 1800000;
+        {{#if RADSEC_SERVER_CLIENT_CA_DIRECTORY_REFRESH_INTERVAL}}
+        interval {{{RADSEC_SERVER_CLIENT_CA_DIRECTORY_REFRESH_INTERVAL}}};
+        {{/if}}
+    }
+    {{/if}}
+
+}

@@ -1,0 +1,41 @@
+# 40_servers-radius.radconf
+#
+# Configure sockets to listen incoming messages.
+# One protocol and port per server supported.
+#
+
+servers {
+
+    # one protocol+port per server supported
+    radius "RADIUS_UDP_1812" {
+        #capture "CAPTURE_TO_CONSOLE_AND_DIRECTORY";
+        #capture "CAPTURE_TO_DIRECTORY";
+        listen {
+            protocol udp;
+            port 1812;
+            # listen to all IPv4 addresses
+            ip 0.0.0.0;
+            # listen to all IPv6 addresses
+            ip ::;
+        }
+
+        # RADIUS client lists and pre-client cannot be used simultaneously
+        clients "CLIENTS_RADIUS_ALL";
+    }
+
+    radius "RADIUS_UDP_1813" {
+        #capture "CAPTURE_TO_CONSOLE_AND_DIRECTORY";
+        #capture "CAPTURE_TO_DIRECTORY";
+        listen {
+            protocol udp;
+            port 1813;
+            # listen to all IPv4 addresses
+            ip 0.0.0.0;
+            # listen to all IPv6 addresses
+            ip ::;
+        }
+
+        # RADIUS client lists and pre-client cannot be used simultaneously
+        clients "CLIENTS_RADIUS_ALL";
+    }
+}

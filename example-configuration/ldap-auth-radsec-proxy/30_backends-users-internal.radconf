@@ -1,0 +1,21 @@
+# 30_backends-users-internal.radconf
+#
+# Backends for internal users authentication
+#
+
+backends {
+
+    jsonfile "JSONFILE_USERS_INTERNAL" {
+
+        # JSON file to use
+        filename "<root>/db/users-internal/users-internal.json5";
+
+        # SQL query named "FIND_USER"
+        query "FIND_USER" {
+          mapping {
+            user.username = doc | jsonpath("$.users[?(@.username == '%{aaa.identity}')].username");
+            user.password = doc | jsonpath("$.users[?(@.username == '%{aaa.identity}')].password");
+          }
+        }
+    }
+}

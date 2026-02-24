@@ -1,0 +1,11 @@
+clients {
+    tacacs-plus "CLIENTS_TACACS_PLUS" {
+        client "ALL_IP" {
+            source {
+                ip 0.0.0.0/0;
+                ip ::/0;
+            }
+            secret "mysecret";
+        }
+    }
+}

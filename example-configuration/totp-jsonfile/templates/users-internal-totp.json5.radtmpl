@@ -1,0 +1,48 @@
+# radiator-config-template
+{
+  "description": "",
+  "items": [
+    {
+      "id": "USERS",
+      "label": "Users",
+      "type": "group",
+      "layout": "table",
+      "items": [
+        {
+          "id": "USER_ID",
+          "label": "User Id",
+          "type": "string"
+        },
+        {
+          "id": "PASSWORD",
+          "label": "Password",
+          "type": "password"
+        },
+        {
+          "id": "enabled",
+          "label": "MFA enabled",
+          "type": "boolean"
+        },
+        {
+          "id": "SEED",
+          "label": "Seed",
+          "type": "secret",
+          "optional": true
+        }
+      ]
+    }
+  ]
+}
+# radiator-config-template
+{
+  "users": [
+    {{#each USERS}}
+    {
+    "username": "{{{USER_ID}}}",
+    "password": "{{{PASSWORD}}}",
+    "totp_enabled": "{{{enabled}}}",
+    "seed": "{{{SEED}}}",
+    }{{#unless @last}},{{/unless}}
+{{/each}}
+]
+}
