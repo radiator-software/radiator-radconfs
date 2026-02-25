@@ -1,0 +1,68 @@
+# 30_backends.radconf
+#
+# Radiator backends configuration
+#
+
+backends {
+    mysql "AUTHBY-SQL-SUBSCRIBERS" {
+        # server-selection is same as with backend radius (fallback is default)
+        server-selection fallback;
+        #server-selection no-fallback;
+        #server-selection round-robin;
+
+        server "mysql-1" {
+            #host "127.0.0.1";
+            #port 3306;
+            connections 10;
+            #timeout 3000;
+            database "fixedline";
+            username "radiator";
+            password "password";
+        }
+
+        # SQL query named "FIND_ALC_LINE_PARAMS"
+	# Fetch line parameters from the DB.
+        query "FIND_ALC_LINE_PARAMS" {
+            # SQL statement
+            statement "SELECT sub_id, sub_sla, sub_prof, agent_remote FROM users WHERE nas=? AND agent_remote=? AND agent_circuit=?";
+
+            # Query argument binding in order
+            bindings {
+                radius.request.attr.NAS-Identifier;
+                radius.request.attr.DSLForum-Agent-Remote-Id;
+                radius.request.attr.DSLForum-Agent-Circuit-Id;
+            }
+
+            # Result value mapping
+            mapping {
+                vars.alc_id = sub_id;
+                vars.alc_sla = sub_sla;
+                vars.alc_prof = sub_prof;
+            }
+        }
+
+        # SQL query named "FIND_ALC_USER_PW"
+	# Fetch user and line parameters from the DB.
+        query "FIND_ALC_USER_PW" {
+            # SQL statement
+            statement "SELECT sub_id, sub_password, agent_circuit, agent_remote, sub_sla, sub_prof FROM users WHERE sub_id=? AND nas=?";
+
+            # Query argument binding in order
+            bindings {
+	        aaa.identity;
+                radius.request.attr.NAS-Identifier;
+            }
+
+            # Result value mapping
+            mapping {
+                vars.alc_id = sub_id;
+                user.password = sub_password;
+                vars.alc_id = sub_id;
+                vars.alc_sla = sub_sla;
+                vars.alc_prof = sub_prof;
+                vars.dsl_agent_circuit = agent_circuit;
+                vars.dsl_agent_remote = agent_remote;
+            }
+        }
+    }
+}

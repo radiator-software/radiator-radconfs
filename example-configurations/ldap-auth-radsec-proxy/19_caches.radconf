@@ -1,0 +1,10 @@
+# 19_caches.radconf
+# Cache configuration for storing groups queried from LDAP
+#
+
+caches {
+    cache "groups" {
+        # default timeout 600 seconds
+        timeout 600000;
+    }
+}

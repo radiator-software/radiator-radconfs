@@ -1,0 +1,109 @@
+# radiator-config-template
+{
+  "description": "Upload and replace EAP server certificates and keys",
+  "items": [
+    {
+      "id": "EAP_SERVER_CERT",
+      "label": "EAP server certificate (chain) file",
+      "description": "EAP server certificate (chain) file",
+      "type": "file_upload",
+      "file_type": "cert",
+      "path": "<root>/tls/certs",
+      "filename_id": "EAP_SERVER_CERT_FILE",
+      "placeholder": "EAP_SERVER_CERT",
+      "readOnly": true
+    },
+    {
+      "id": "EAP_SERVER_KEY",
+      "label": "EAP server private key file",
+      "description": "EAP server private key file",
+      "type": "file_upload",
+      "file_type": "key",
+      "path": "<root>/tls/keys",
+      "filename_id": "EAP_SERVER_KEY_FILE",
+      "placeholder": "EAP_SERVER_KEY",
+      "readOnly": true
+    },
+    {
+      "id": "EAP_SERVER_KEY_PASSWORD",
+      "label": "EAP server private key password if any",
+      "description": "Password for RadSec server private key file in case the private key is password protected",
+      "type": "secret",
+      "optional": true
+    },
+    {
+      "id": "EAP_SERVER_CLIENT_CA_FILE",
+      "label": "EAP server client CA certificate",
+      "description": "The CA certificate, which is used to validate EAP clients connecting to this server.",
+      "type": "file_upload",
+      "file_type": "cert",
+      "path": "<root>/tls/ca",
+      "filename_id": "EAP_SERVER_CLIENT_CA_FILE",
+      "placeholder": "EAP_SERVER_CLIENT_CA",
+      "readOnly": true,
+      "optional": true
+    },
+    {
+      "id": "EAP_SERVER_CLIENT_CA_DIRECTORY_PATH",
+      "label": "EAP server client CA certificate directory",
+      "description": "Directory for uploading CA certificates, which are used to validate EAP clients connecting to this server.",
+      "type": "file_upload",
+      "file_type": "cert_dir",
+      "path": "<root>/tls/ca",
+      "filename_id": "EAP_SERVER_CLIENT_CA_DIRECTORY_PATH",
+      "placeholder": "EAP_SERVER_CLIENT_CA",
+      "readOnly": true,
+      "optional": true
+    },
+    {
+      "id": "EAP_SERVER_CLIENT_CA_DIRECTORY_REFRESH_INTERVAL",
+      "label": "EAP server client CA certificate directory refresh interval",
+      "description": "The interval in milliseconds for checking the contents of RadSec server client CA certificate directory for new CA certificates. 30 min = 30*60*1000 = 1 800 000 milliseconds.",
+      "type": "string",
+      "placeholder": "1800000",
+      "optional": true
+    }
+  ]
+}
+# radiator-config-template
+# Certificates configuration generated from template
+#
+# Each certificate/key is uploaded to tls/certs, tls/key or tls/ca and
+# configured here. CA directories are stored under tls/ca.
+
+certificates {
+  {{#if EAP_SERVER_CERT_FILE}}
+  x509 "EAP_SERVER_CERT" {
+    filename "{{{EAP_SERVER_CERT_FILE}}}";
+  }
+  {{/if}}
+
+  {{#if EAP_SERVER_KEY_FILE}}
+  key "EAP_SERVER_KEY" {
+    filename "{{{EAP_SERVER_KEY_FILE}}}";
+    {{#if EAP_SERVER_KEY_PASSWORD}}
+    password "{{{EAP_SERVER_KEY_PASSWORD}}}";
+    {{/if}}
+  }
+  {{/if}}
+
+  {{#if EAP_SERVER_CLIENT_CA_FILE}}
+  x509 "EAP_SERVER_CLIENT_CA" {
+    filename "{{{EAP_SERVER_CLIENT_CA_FILE}}}";
+  }
+  {{/if}}
+
+  {{#if EAP_SERVER_CLIENT_CA_DIRECTORY_PATH}}
+  x509-directory "EAP_SERVER_CLIENT_CA_DIRECTORY" {
+    directory "{{{EAP_SERVER_CLIENT_CA_DIRECTORY_PATH}}}";
+    # The interval in milliseconds for checking the contents of RadSec
+    # server client CA certificate directory for new CA certificates.
+    # 30 min = 30*60*1000 = 1 800 000 milliseconds.
+    #interval 1800000;
+    {{#if EAP_SERVER_CLIENT_CA_DIRECTORY_REFRESH_INTERVAL}}
+    interval {{{EAP_SERVER_CLIENT_CA_DIRECTORY_REFRESH_INTERVAL}}};
+    {{/if}}
+  }
+  {{/if}}
+
+}

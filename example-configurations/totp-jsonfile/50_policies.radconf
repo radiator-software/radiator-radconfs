@@ -1,0 +1,56 @@
+# 50_policies.radconf
+#
+# Radiator policy configuration
+#
+
+# The cache is used for blocking repeat attacks.
+caches {
+  cache "last_timestep" {
+   timeout 60s;
+  }
+}
+aaa {
+    policy "EMPLOYEES" {
+        handler "USERS" {
+            conditions all {
+                # match only RADIUS authentication requests
+                radius.request.code == radius.ACCESS_REQUEST;
+            }
+
+            @execute {
+                backend {
+                    name "JSONFILE_USERS_INTERNAL_TOTP";
+                    query "FIND_USER";
+                }
+                if any {
+                  # If user has MFA enabled, use PAP + TOTP. Otherwise authenticated with PAP.
+                  vars.totp_enabled == "true";
+                } then {
+                  pap {
+                   # Uses all but last 6 characters for PAP password.
+                    range -6 0 exclusive;
+                  }
+                  if any {
+                      cache.last_timestep[aaa.identity] != none;
+                  } then {
+                      modify hmac-otp.timestep.last = cache.last_timestep[aaa.identity][0];
+                  }
+                  totp {
+                    # One previous timestep is accepted (If not used), none from the future.
+                    resync_window 1 0;
+                    # Uses last 6 digits of password as TOTP code.
+                    range -6 0;
+                  }
+                  modify cache.last_timestep[aaa.identity] = hmac-otp.timestep.last;
+
+                # If MFA is not enabled for user in backend, using only PAP.
+                } else {
+                  pap;
+                }
+            }
+            @final-execute {
+                invoke "LOG_AUTHENTICATION";
+            }
+        }
+    }
+}
