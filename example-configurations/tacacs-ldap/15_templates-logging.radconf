@@ -6,7 +6,7 @@
 aaa {
 
     # LOG_AUTHENTICATION pipeline for authentication logging
-    @pipeline "LOG_AUTHENTICATION" {
+    pipeline "LOG_AUTHENTICATION" {
         # log using AUTHLOG logging handler
         log "AUTHENTICATION" {
             json {
@@ -50,7 +50,7 @@ aaa {
     } # pipeline "LOG_AUTHENTICATION"
 
     # LOG_ACCOUNTING pipeline for accounting logging
-    @pipeline "LOG_ACCOUNTING" {
+    pipeline "LOG_ACCOUNTING" {
         # log using ACCTLOG logging handler
         log "ACCOUNTING" {
             json {
@@ -95,7 +95,7 @@ aaa {
     } # pipeline "LOG_ACCOUNTING"
 
     # LOG_AUTHORIZATION pipeline for authorization logging
-    @pipeline "LOG_AUTHORIZATION" {
+    pipeline "LOG_AUTHORIZATION" {
         log "AUTHORIZATION" {
             json {
                 "Timestamp" datetime.timestamp;
