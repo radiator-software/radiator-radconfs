@@ -1,0 +1,10 @@
+# 15_dictionary.radconf
+#
+# Radiator default dictionary configuration
+#
+
+dictionary {
+    radius {
+        filename "/opt/radiator/server/dictionary";
+    }
+}
