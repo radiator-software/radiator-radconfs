@@ -6,8 +6,8 @@ Utilizing these example configurations requires testing access to Radiator Polic
 
 ## Importing Configurations
 
-Example configurations are provided as `.zip` archieves. These can be imported into a Radiator instance using the configuration import feature in the Management UI.
-For detailed instructions on importing and exporting configurations, see the [Configuration Import & Export documentation](docs.radiatorsoftware.com/docs/articles/configuration-import-export.md).
+Example configurations are provided as `.zip` archieves. These can be imported into a Radiator instance using the configuration import feature in the user interface.
+For detailed instructions on importing and exporting configurations, see the [Configuration Import & Export documentation](https://docs.radiatorsoftware.com/latest/docs/articles/configuration-import-export/).
 
 ## Browsing Configurations
 
@@ -21,7 +21,7 @@ Demonstrates EAP-TLS certificate-based authentication with Microsoft Entra ID as
 
 ### Minimal EAP-TLS (`eap-tls-minimal`)
 
-A minimal EAP-TLS configuration for getting started with certificate-based RADIUS authentication. Uses default certificates that are automatically available after installation.
+A minimal EAP-TLS configuration for getting started with certificate-based RADIUS authentication. Uses demo certificates that are automatically available after installation.
 
 ### Microsoft Entra ID Authentication (`entra-ad`)
 
@@ -54,10 +54,10 @@ Demonstrates proxying RADIUS requests over both RADIUS/UDP and RadSec (RADIUS ov
 Configures TACACS+ authentication, command authorisation, and accounting against an LDAP backend. Supports group-based command authorisation rules fetched from LDAP.
 
 ### TOTP + PAP with JSON File Backend (`totp-jsonfile`)
-Authenticates users with PAP combined with TOTP (Time-based One-Time Password). User credentials and TOTP seeds are stored in a JSON5 file managed through the Management UI. TOTP can be enabled or disabled per user.
+Authenticates users with PAP combined with TOTP (Time-based One-Time Password). User credentials and TOTP seeds are stored in a JSON5 file managed via the user interface. TOTP can be enabled or disabled per user.
 
 ### TOTP + PAP with SQLite Backend (`totp-sqlite`)
 Authenticates users with PAP combined with TOTP using an SQLite database backend. Includes TOTP replay protection by tracking the last used timestep. User management is done directly via SQL.
 
 ### Enterprise Wi-Fi EAP Server (`wifi-eap-server`)
-A comprehensive enterprise Wi-Fi (802.1X/WPA Enterprise) configuration supporting EAP-TLS, EAP-TTLS, PEAP, and TEAP authentication methods. Includes both RADIUS and RadSec server support, VLAN assignment examples, and a JSON file backend for user management.
+A comprehensive enterprise Wi-Fi (802.1X/WPA Enterprise) configuration supporting EAP-TLS, EAP-TTLS, EAP-PEAP and EAP-TEAP authentication methods. Includes both RADIUS and RadSec server support, VLAN assignment examples, and a JSON file backend for user management.
