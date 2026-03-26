@@ -1,9 +1,0 @@
-# 10_license.radconf
-#
-# Radiator license configuration
-#
-
-license {
-    # use a license directory to look for licenses
-    directory "<root>/licenses";
-}
