@@ -15,6 +15,10 @@ Unzipped versions of all example configurations are available under the [`exampl
 
 ## Example Configurations
 
+### Default minimal configuration (`defaul`)
+
+Empty configuration for clearing the existing configuration for easy start over.
+
 ### EAP-TLS with Microsoft Entra ID Authorisation (`eap-tls-entra-authz`)
 
 Demonstrates EAP-TLS certificate-based authentication with Microsoft Entra ID as the authorisation backend. Policies check user group membership in Entra ID to authorise access.
