@@ -47,6 +47,10 @@ Configuration for fixed-line broadband scenarios such as FTTP and xDSL. Uses SQL
 
 Authenticates local users against an LDAP backend while proxying requests for other realms via RadSec (e.g., to eduroam). Combines local LDAP authorisation with federated proxy functionality.
 
+### Okta Authentication (`okta-ad`)
+
+Configures Okta as the authentication backend for RADIUS. Includes PAP authentication against Okta, with optional group check included.
+
 ### Minimal PAP (`pap-minimal`)
 
 A minimal PAP authentication configuration. Authenticates users from a flat file backend — the simplest starting point for getting Radiator up and running.
