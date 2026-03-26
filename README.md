@@ -15,7 +15,7 @@ Unzipped versions of all example configurations are available under the [`exampl
 
 ## Example Configurations
 
-### Default minimal configuration (`defaul`)
+### Default minimal configuration (`default`)
 
 Empty configuration for clearing the existing configuration for easy start over.
 
