@@ -1,0 +1,15 @@
+ui {
+    sidebar {
+        section "Management";
+        item "Management users" {
+            url "/configuration/files/details/?filename=management%2Fmanagement-users.json5&template-hint=management-users.json5.radtmpl";
+            icon "LockOpen";
+        }
+
+        section "Configuration";
+        item "Local clients" {
+            url "/configuration/files/details/?filename=40_clients-radius.radconf&template-hint=40_clients-radius.radtmpl";
+            icon "Router";
+        }
+    }
+}

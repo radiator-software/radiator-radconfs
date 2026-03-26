@@ -1,0 +1,20 @@
+# 30_backends-users-internal.radconf
+#
+# Backends for internal users authentication
+#
+backends {
+    jsonfile "JSONFILE_USERS_INTERNAL_TOTP" {
+        # JSON file to use
+        filename "<root>/db/users-internal/users-internal-totp.json5";
+        query "FIND_USER" {
+          mapping {
+            user.username = doc | jsonpath("$.users[?(@.username == '%{aaa.identity}')].username");
+            user.password = doc | jsonpath("$.users[?(@.username == '%{aaa.identity}')].password");
+            #TOTP seed
+            hmac-otp.secret = doc | jsonpath("$.users[?(@.username == '%{aaa.identity}')].seed");
+            #Option in backend template to enable/disable MFA.
+            vars.totp_enabled = doc | jsonpath("$.users[?(@.username == '%{aaa.identity}')].totp_enabled");
+          }
+        }
+    }
+}

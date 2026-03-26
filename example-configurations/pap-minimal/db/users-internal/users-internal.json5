@@ -1,0 +1,31 @@
+// radiator-interpolated-config-template {"originalTemplate":{"filename":"users-internal.json5.radtmpl","checksum":"6eca22e3"},"items":[{"id":"USERS","type":"group","instances":[{"USER_ID":"mikem","PASSWORD":"fred"},{"USER_ID":"batman","PASSWORD":"TheHeroGothamDeserves"},{"USER_ID":"alfred","PASSWORD":"TheButlerDidIt"},{"USER_ID":"robin","PASSWORD":"HolyPasswordBatman"}]}]}
+// NOTE: This file has been automatically generated from a template file at users-internal.json5.radtmpl.
+//
+// The file was generated with the following template values:
+// - Users: 4 entries
+//
+// Any manual changes to the below configuration will be lost if the template values are
+// edited via the management UI. You can disable the management UI template form for
+// this configuration file by removing the radiator-interpolated-config-template comment
+// on the first line.
+
+{
+  "users": [
+    {
+    "username": "mikem",
+    "password": "fred",
+    },
+    {
+    "username": "batman",
+    "password": "TheHeroGothamDeserves",
+    },
+    {
+    "username": "alfred",
+    "password": "TheButlerDidIt",
+    },
+    {
+    "username": "robin",
+    "password": "HolyPasswordBatman",
+    }
+]
+}
