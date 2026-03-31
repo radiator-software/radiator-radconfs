@@ -1,0 +1,211 @@
+# radiator-config-template
+{
+  "description": "TACACS+ authorization configuration",
+  "items": [
+    {
+      "id": "POLICY_NAME",
+      "label": "Policy name",
+      "description": "Name for the AAA policy",
+      "type": "string",
+      "placeholder": "TACACS_AUTHORIZATION"
+    },
+    {
+      "id": "HANDLER_NAME",
+      "label": "Handler name",
+      "description": "Name for the authorization handler",
+      "type": "string",
+      "placeholder": "tacacs_authorization"
+    },
+    {
+      "id": "RULES",
+      "label": "Authorization rules",
+      "description": "Define authorization rules that map user groups to TACACS+ argument matching and reply attributes",
+      "type": "group",
+      "min": 0,
+      "layout": "form",
+      "items": [
+        {
+          "id": "RULE_GROUP",
+          "label": "User group",
+          "description": "The user group name to match (e.g., 'group1'). User must be a member of this group for this rule to apply.",
+          "type": "string",
+          "placeholder": "group1"
+        },
+        {
+          "id": "CLIENT",
+          "label": "Clients to match",
+          "type": "group",
+          "min": 0,
+          "layout": "table",
+          "items": [
+            {
+              "id": "CLIENT_MATCH",
+              "label": "Client Match",
+              "type": "string"
+            },
+            {
+              "id": "CLIENT_MATCH_TYPE",
+              "label": "Client match type",
+              "type": "enum",
+              "options": [
+                {
+                  "value": "ip",
+                  "label": "IP address"
+                },
+                {
+                  "value": "id",
+                  "label": "Client identifier"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ARGUMENTS",
+          "label": "Request arguments to match",
+          "description": "TACACS+ request arguments to match. All arguments must match for the rule to apply.",
+          "type": "group",
+          "min": 0,
+          "layout": "table",
+          "items": [
+            {
+              "id": "ARG_VALUE",
+              "label": "Argument pattern",
+              "description": "Value or pattern to match against tacacsplus.request.args",
+              "type": "string",
+              "placeholder": "service=shell"
+            },
+            {
+              "id": "ARG_MATCH_TYPE",
+              "label": "Match type",
+              "description": "How to match this argument: exact string, regular expression, or literal (unquoted)",
+              "type": "enum",
+              "options": [
+                {
+                  "value": "string",
+                  "label": "Exact string"
+                },
+                {
+                  "value": "regex",
+                  "label": "Regular expression"
+                },
+                {
+                  "value": "literal",
+                  "label": "Literal value"
+                }
+              ]
+            },
+            {
+              "id": "NEGATE",
+              "label": "Negate",
+              "description": "If checked, the condition will be negated (match when argument does NOT match the pattern)",
+              "type": "boolean"
+            }
+          ]
+        },
+        {
+          "id": "RULE_ACTION",
+          "label": "Action",
+          "description": "Action to take when this rule matches",
+          "type": "enum",
+          "options": [
+            {
+              "value": "accept",
+              "label": "Accept"
+            },
+            {
+              "value": "reject",
+              "label": "Reject"
+            }
+          ]
+        },
+        {
+          "id": "REPLY_ARGS",
+          "label": "Reply arguments",
+          "description": "TACACS+ reply arguments to add when this rule matches (e.g., 'inacl=101', 'priv-lvl=15')",
+          "type": "group",
+          "min": 0,
+          "layout": "table",
+          "items": [
+            {
+              "id": "ARG",
+              "label": "Reply argument",
+              "description": "Reply argument in key=value format",
+              "type": "string",
+              "placeholder": "inacl=101"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REJECT_MESSAGE",
+      "label": "Default reject message",
+      "description": "Message to include when rejecting requests that don't match any rule",
+      "type": "string",
+      "placeholder": "no rule match"
+    }
+  ]
+}
+# radiator-config-template
+aaa {
+@pipeline "TACACSPLUS_RULES" {
+
+    # Copy request args to vars for indexed access in conditions
+    modify {
+        vars.args = tacacsplus.request.args;
+    }
+
+    # Map user's groups to TACACS+ authorization rules
+    # and check the request for valid rule.
+    map user.group {
+    {{#each RULES}}
+    # Rule for group: {{{RULE_GROUP}}}
+        "{{{RULE_GROUP}}}" => {
+            if all {
+            {{#each CLIENT}}
+            {{#if (eq CLIENT_MATCH_TYPE "ip")}}
+                tacacsplus.client.ip == {{{CLIENT_MATCH}}};
+            {{else if (eq CLIENT_MATCH_TYPE "id")}}
+                tacacsplus.client == {{{CLIENT_MATCH}}};
+            {{/if}}
+            {{/each}}
+    {{#each ARGUMENTS}}
+    {{#if (eq ARG_MATCH_TYPE "regex")}}
+                vars.args[{{@index}}] {{#if NEGATE}}!={{else}}=={{/if}} /{{{ARG_VALUE}}}/;
+    {{else if (eq ARG_MATCH_TYPE "literal")}}
+                vars.args[{{@index}}] {{#if NEGATE}}!={{else}}=={{/if}} {{{ARG_VALUE}}};
+    {{else}}
+                vars.args[{{@index}}] {{#if NEGATE}}!={{else}}=={{/if}} "{{{ARG_VALUE}}}";
+    {{/if}}
+    {{/each}}
+            } then {
+    {{#if REPLY_ARGS}}
+                modify {
+    {{#each REPLY_ARGS}}
+                    tacacsplus.reply.args += "{{{ARG}}}";
+    {{/each}}
+                }
+    {{/if}}
+                {{{RULE_ACTION}}};
+            }
+        }
+    {{/each}}
+
+    # Group catch-all: reject if no group matches
+    #############################################
+        any => {
+            reject "{{{REJECT_MESSAGE}}}";
+        }
+    }
+
+    # Fallback: reject if no rule matched
+    if all {
+        aaa.result == none;
+    } then {
+        reject "{{{REJECT_MESSAGE}}}";
+    }
+
+} # pipeline
+} # aaa
+

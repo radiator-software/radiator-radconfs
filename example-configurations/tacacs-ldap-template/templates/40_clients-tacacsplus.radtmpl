@@ -1,0 +1,66 @@
+# radiator-config-template
+{
+  "description": "Template for creating and editing TACACS+ clients (NAS) in Radiator configuration",
+  "items": [
+    {
+      "id": "TACACSPLUS",
+      "label": "TACACS+ client group",
+      "type": "group",
+      "min": 1,
+      "max": 1,
+      "layout": "form",
+      "items": [
+        {
+          "id": "CLIENTS",
+          "label": "TACACS+ Client",
+          "type": "group",
+          "layout": "form",
+          "items": [
+            {
+              "id": "CLIENT_IDENTIFIER",
+              "label": "Client identifier",
+              "type": "string"
+            },
+            {
+              "id": "CLIENT_SECRET",
+              "label": "Client Secret",
+              "type": "secret"
+            },
+            {
+              "id": "IP",
+              "label": "Client IP",
+              "type": "group",
+              "layout": "table",
+              "items": [
+                {
+                  "id": "IP_ADDRESS",
+                  "label": "List client IP addresses",
+                  "type": "string"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+# radiator-config-template
+# Template body (use {{VARIABLE_NAME}} for interpolation)
+clients {
+  {{#each TACACSPLUS}}
+  tacacs-plus "CLIENTS_TACACSPLUS_ALL" {
+    {{#each CLIENTS}}
+    client "{{{CLIENT_IDENTIFIER}}}" {
+      source {
+        {{#each IP}}
+        ip {{{IP_ADDRESS}}};
+        {{/each}}
+      }
+      secret "{{CLIENT_SECRET}}";
+    }
+    {{/each}}
+  }
+  {{/each}}
+}
+

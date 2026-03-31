@@ -1,0 +1,42 @@
+# radiator-interpolated-config-template {"originalTemplate":{"filename":"50_tacacs-authorization-rules.radtmpl","checksum":"9fb8e76c"},"items":[{"id":"POLICY_NAME","value":"TACACS_AUTHORIZATION"},{"id":"HANDLER_NAME","value":"tacacs_authorization"},{"id":"RULES","type":"group","instances":[]},{"id":"REJECT_MESSAGE","value":"no rule match"}]}
+# NOTE: This file has been automatically generated from a template file at 50_tacacs-authorization-rules.radtmpl.
+#
+# The file was generated with the following template values:
+# - Policy name: TACACS_AUTHORIZATION
+# - Handler name: tacacs_authorization
+# - Default reject message: no rule match
+# - Authorization rules: 0 entries
+#
+# Any manual changes to the below configuration will be lost if the template values are
+# edited via the management UI. You can disable the management UI template form for
+# this configuration file by removing the radiator-interpolated-config-template comment
+# on the first line.
+
+aaa {
+@pipeline "TACACSPLUS_RULES" {
+
+    # Copy request args to vars for indexed access in conditions
+    modify {
+        vars.args = tacacsplus.request.args;
+    }
+
+    # Map user's groups to TACACS+ authorization rules
+    # and check the request for valid rule.
+    map user.group {
+
+    # Group catch-all: reject if no group matches
+    #############################################
+        any => {
+            reject "no rule match";
+        }
+    }
+
+    # Fallback: reject if no rule matched
+    if all {
+        aaa.result == none;
+    } then {
+        reject "no rule match";
+    }
+
+} # pipeline
+} # aaa

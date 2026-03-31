@@ -1,0 +1,125 @@
+# Example Radiator policy configuration for TACACS+ AAA
+
+#############################################
+# Store TACACS+ group details in cache between requests,
+# skipping the need to request data from LDAP on every
+# authorization request.
+# This also defines timeout for Authorization requests.
+
+caches {
+    cache "groups" {
+        timeout 1800s; # Authorization timeout 30 minutes
+    }
+}
+
+
+# Configure policy
+#############################################
+aaa {
+  policy "POLICY_TACACS_PLUS" {
+
+    # AUTHENTICATION
+    #############################################
+    handler "tacacs_authentication" {
+        # Handle only TACACS+ authentication
+        conditions all {
+            tacacsplus.authentication == true;
+        }
+
+        # Try to authenticate requests
+        @execute {
+            debug "=== AUTHENTICATION ===";
+
+            backend {
+                name "LDAPSERVER";
+                query "find_user";
+            }
+            any {
+                pap  authentication;
+                chap authentication;
+            }
+
+            debug "=== AUTHENTICATED";
+
+            backend {
+                name "LDAPSERVER";
+                query "user_groups";
+            }
+
+            debug "=== AUTHZ GROUPS FETCHED: %{ user.group }";
+
+            modify cache.groups[aaa.identity] = user.group[*];
+
+            debug "=== USER CACHE UPDATED";
+
+            modify tacacsplus.reply.message = "Access granted";
+        }
+
+        # Log authentication requests
+        @final-execute {
+            invoke "LOG_AUTHENTICATION";
+        }
+    }
+
+
+    # ACCOUNTING
+    #############################################
+    handler "tacacs_accounting" {
+        # Handle only TACACS+ authentication
+        conditions all {
+            tacacsplus.accounting == true;
+        }
+
+        # (Optional) Explicitly just accept any accounting requests
+        @execute {
+            accept;
+        }
+
+        # Log accounting requests
+        @final-execute {
+            invoke "LOG_ACCOUNTING";
+        }
+    }
+
+
+    # AUTHORIZATION
+    #############################################
+    handler "tacacs_authorization" {
+        # Handle only TACACS+ authorization
+        conditions all {
+            tacacsplus.authorization == true;
+        }
+
+        # Log authorization requests
+        @final-execute {
+            invoke "LOG_AUTHORIZATION";
+        }
+
+        @execute {
+            debug "=== AUTHORIZATION ===";
+
+            if any {
+                cache.groups[aaa.identity] != none;
+            } then {
+                debug "=== USER FOUND IN CACHE";
+                modify {
+                    user.group = cache.groups[aaa.identity][*];
+                    tacacsplus.reply.message = "Authz: user ok, groups %{ user.group }";
+                }
+                debug user.group;
+            } else {
+                debug "=== USER NOT FOUND IN CACHE";
+                modify {
+                    tacacsplus.reply.message = "Authz: rejected";
+                }
+                reject;
+            }
+
+            debug "=== TACACS+ COMMAND AUTHORIZATION";
+
+            invoke "TACACSPLUS_RULES";
+        }
+    }
+}
+}
+

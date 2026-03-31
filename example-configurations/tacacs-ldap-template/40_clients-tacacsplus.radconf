@@ -1,0 +1,23 @@
+# radiator-interpolated-config-template {"originalTemplate":{"filename":"40_clients-tacacsplus.radtmpl","checksum":"9b7cb983"},"items":[{"id":"TACACSPLUS","type":"group","instances":[{"CLIENTS":[{"CLIENT_IDENTIFIER":"ALL_IP","CLIENT_SECRET":"mysecret","IP":[{"IP_ADDRESS":"0.0.0.0/0"},{"IP_ADDRESS":"::/0"}]}]}]}]}
+# NOTE: This file has been automatically generated from a template file at 40_clients-tacacsplus.radtmpl.
+#
+# The file was generated with the following template values:
+# - TACACS+ client group: 1 entry
+#
+# Any manual changes to the below configuration will be lost if the template values are
+# edited via the management UI. You can disable the management UI template form for
+# this configuration file by removing the radiator-interpolated-config-template comment
+# on the first line.
+
+# Template body (use  for interpolation)
+clients {
+  tacacs-plus "CLIENTS_TACACSPLUS_ALL" {
+    client "ALL_IP" {
+      source {
+        ip 0.0.0.0/0;
+        ip ::/0;
+      }
+      secret "mysecret";
+    }
+  }
+}
