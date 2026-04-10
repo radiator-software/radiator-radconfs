@@ -2,7 +2,7 @@
 
 This repository contains example configurations for [Radiator Policy Server](https://www.radiatorsoftware.com/products/radiator-policy-server) and [Radiator Core](https://radiatorsoftware.com/products/radiator-core). These configurations demonstrate common deployment scenarios and can be imported directly into a new Radiator instance from the UI configuration import.
 
-Utilizing these example configurations requires testing access to Radiator Policy Server or Radiator Core. To acquire testing access, please visit [our evaluation page](https://radiatorsoftware.com/evaluation) or contact sales@radiatorsoftware.com 
+Utilizing these example configurations requires testing access to Radiator Policy Server or Radiator Core. To acquire testing access, please visit [our evaluation page](https://radiatorsoftware.com/evaluation) or contact sales@radiatorsoftware.com
 
 ## Importing Configurations
 
@@ -14,6 +14,10 @@ For detailed instructions on importing and exporting configurations, see the [Co
 Unzipped versions of all example configurations are available under the [`example-configurations/`](example-configurations/) directory for convenient browsing and review without needing to extract the zip archives.
 
 ## Example Configurations
+
+### AD Authentication (`ad`)
+
+AD authentication with optional group check included.
 
 ### Default minimal configuration (`default`)
 
@@ -47,9 +51,17 @@ Configuration for fixed-line broadband scenarios such as FTTP and xDSL. Uses SQL
 
 Authenticates local users against an LDAP backend while proxying requests for other realms via RadSec (e.g., to eduroam). Combines local LDAP authorisation with federated proxy functionality.
 
+### Management UI with LDAP (`mgmt-ldap`)
+
+Management UI authentication from LDAP with fallback option to local JSON file.
+
 ### Okta Authentication (`okta-ad`)
 
 Configures Okta as the authentication backend for RADIUS. Includes PAP authentication against Okta, with optional group check included.
+
+### Okta Authentication with Yubikey OPT (`okta-yubikey-otp`)
+
+Configures Okta as the authentication backend for RADIUS with offline Yubikey OTP check from SQLite database. Does PAP authentication against Okta, Yubikey OTP against local database and optional group check.
 
 ### Minimal PAP (`pap-minimal`)
 
@@ -60,6 +72,9 @@ Demonstrates proxying RADIUS requests over both RADIUS/UDP and RadSec (RADIUS ov
 
 ### TACACS+ with LDAP Backend (`tacacs-ldap`)
 Configures TACACS+ authentication, command authorisation, and accounting against an LDAP backend. Supports group-based command authorisation rules fetched from LDAP.
+
+### TACACS+ with LDAP and Editor (`tacacs-ldap-template`)
+Configures TACACS+ authentication, command authorisation, and accounting against an LDAP backend. Supports group-based command authorisation rules fetched from LDAP. Includes UI editing of TACACS+ clients and authorisation rules for easier day-to-day operations.
 
 ### TOTP + PAP with JSON File Backend (`totp-jsonfile`)
 Authenticates users with PAP combined with TOTP (Time-based One-Time Password). User credentials and TOTP seeds are stored in a JSON5 file managed via the user interface. TOTP can be enabled or disabled per user.

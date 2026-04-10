@@ -1,0 +1,40 @@
+aaa {
+    policy "MANAGEMENT_POLICY" {
+        conditions all {
+            http.management == true;
+        }
+
+        handler "AUTHENTICATION" {
+            @execute {
+                with all {
+                    try backend {
+                        name "MGMT_LDAP";
+                        query "FIND_USER";
+                    }
+
+                    if any {
+                        vars.member_of == "CN=radiator-admins,OU=groups,DC=example,DC=org";
+                    } then {
+                        modify { user.privilege = "all"; }
+                    } else {
+                        modify { user.privilege = "monitor"; }
+                    }
+                } do {
+                    any {
+                        http-management-authentication;
+                        backend {
+                            name "MGMT_LDAP";
+                            query "BIND_USER";
+                        }
+                    }
+                } else {
+                    backend {
+                        name "MANAGEMENT_USERS";
+                        query "FIND_USER";
+                    }
+                    http-management-authentication;
+                }
+            }
+        }
+    }
+}

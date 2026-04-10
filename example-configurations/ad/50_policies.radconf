@@ -1,0 +1,154 @@
+# 50_policies.radconf
+#
+# Radiator policy configuration
+# for AD/LDAP authentication
+#
+
+aaa {
+    # First matching policy is selected
+    policy "AUTHENTICATIONS" {
+        conditions all {
+            # Match all authentication requests
+            radius.request.code == radius.ACCESS_REQUEST;
+        }
+
+        # First matching handler is selected to handle the received request
+
+        # Reject usernames with whitespaces
+        handler "REJECT_INVALID_USERNAMES" {
+            conditions any {
+                aaa.identity == /\s+/;
+            }
+            @execute {
+                reason "reject_invalid_usernames: Username contains invalid characters.";
+                reject;
+            }
+            @final-execute {
+                invoke "LOG_AUTHENTICATION";
+            }
+        }
+
+        # Reject if there is no realm or if the realm contains whitespaces
+        handler "REJECT_INVALID_REALMS" {
+            conditions any {
+                aaa.identity.realm == none;
+                aaa.identity.realm == /\s+/;
+            }
+            @execute {
+                reason "reject_invalid_realms: No realm or realm contains invalid characters.";
+                reject;
+            }
+            @final-execute {
+                invoke "LOG_AUTHENTICATION";
+            }
+        }
+
+        # Handler for AD authentication
+        # No conditions, so this handler matches all the other authentication requests
+        handler "AD_AUTHENTICATION" {
+            @execute {
+                # Optionally strip realm from parameter if parameter used when searching LDAP is without realm in LDAP
+                #rewrite aaa.identity /^([^@]+).*/ "$1";
+
+                # Search user to get the user DN
+                backend {
+                    name "AD_SERVER";
+                    query "FIND_USER";
+                }
+
+                # Bind user to authenticate
+                backend {
+                    name "AD_SERVER";
+                    query "BIND_USER";
+                }
+
+                ## Optionally search user groups memberships
+                #backend {
+                #    name "AD_SERVER";
+                #    query "USER_GROUPS";
+                #}
+
+                ## Set VLAN attributes based on user's groups
+                #map vars.groups {
+                #    "guest_group" => {
+                #        modify {
+                #            radius.reply.attr.Tunnel-Type:1 = "VLAN";
+                #            radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
+                #            # assign VLAN ID 125 to RADIUS attribute
+                #            radius.reply.attr.Tunnel-Private-Group-Id:1 = "125";
+                #        }
+                #    }
+                #    "admins_group" => {
+                #        modify {
+                #            radius.reply.attr.Tunnel-Type:1 = "VLAN";
+                #            radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
+                #            # assign VLAN ID 145 to RADIUS attribute
+                #            radius.reply.attr.Tunnel-Private-Group-Id:1 = "145";
+                #        }
+                #    }
+                #    any => {
+                #        reason "No groups matched";
+                #        reject;
+                #    }
+                #}
+            }
+
+            @final-execute {
+                invoke "LOG_AUTHENTICATION";
+            }
+        }
+    }
+
+    # Accounting policy accepts all accounting
+    policy "ACCOUNTING" {
+        conditions all {
+            # match all accounting requests
+            radius.request.code == radius.ACCOUNTING_REQUEST;
+        }
+
+        handler "ACCOUNTING" {
+            conditions all {
+                # match only RADIUS accounting requests
+                radius.request.code == radius.ACCOUNTING_REQUEST;
+            }
+
+            @execute {
+                # accept all accounting
+                accept;
+            }
+
+            # log all accounting
+            @final-execute {
+                invoke "LOG_ACCOUNTING";
+            }
+        }
+    }
+
+    # DEFAULT policy is to reject authentication and accept accounting
+    # matches if none of the previous policies match
+    policy "DEFAULT" {
+
+        # A policy without conditions will handle any request
+
+        # DEFAULT handler rejects all authentication, accepts accounting
+        handler "DEFAULT" {
+            conditions any {
+                aaa.method == any;
+            }
+            @execute {
+                if all {
+                    radius.request.code == radius.ACCOUNTING_REQUEST;
+                } then {
+                    accept;
+                } else {
+                    reason "DEFAULT: No other matching authentication handler found.";
+                    reject;
+                }
+            }
+            @final-execute {
+                invoke "LOG_ACCOUNTING";
+                invoke "LOG_AUTHENTICATION";
+            }
+        }
+    }
+}

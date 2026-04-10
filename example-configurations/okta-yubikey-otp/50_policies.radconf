@@ -1,0 +1,68 @@
+aaa {
+    policy "DEFAULT" {
+        handler "AUTHENTICATION" {
+            conditions all {
+                radius.request.code == radius.ACCESS_REQUEST;
+            }
+
+            @execute {
+                invoke "SET_TENANT_INFORMATION";
+
+                modify vars.password = "%{radius.request.password |reveal | substring(0, -44)}";
+
+                # Okta ROPC authentication with username and password
+                try {
+                    backend {
+                        name "OKTA_ROPC";
+                        query "AUTH_USERS";
+                    }
+                }
+                # Check if the backend call failed, return reject if so
+                if all {
+                    aaa.caught_error != none;
+                } then {
+                    reason aaa.caught_error;
+                    reject;
+                }
+
+                # Offline Yubikey OTP
+                # Insert Yubikey details to the database before usage
+                backend {
+                    name "USERS";
+                    query "FIND_USER";
+                }
+
+                # Validate YubiKey OTP (last 44 characters)
+                yubikey {
+                    range -44 0;
+                }
+
+                backend {
+                    name "USERS";
+                    query "UPDATE_COUNTERS";
+                }
+
+                # Match user groups from Okta
+                map user.group {
+                    "Staff" => {
+                        modify radius.reply.attr.filter-id = "Staff";
+                        reason "Matched group Staff.";
+                        accept;
+                    }
+                    "Students" => {
+                        modify radius.reply.attr.filter-id = "Students";
+                        reason "Matched group Students.";
+                        accept;
+                    }
+                    any => {
+                        reason "None of user groups matched, so the authentication is rejected.";
+                        reject;
+                    }
+                }
+            }
+            @final-execute {
+                invoke "LOG_AUTHENTICATION";
+            }
+        }
+    }
+}

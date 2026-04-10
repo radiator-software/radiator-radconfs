@@ -1,0 +1,30 @@
+backends {
+    ldap "MGMT_LDAP" {
+        server "ldap-server" {
+            url "ldaps://ldap.example.com/";
+            timeout 3s;
+            authentication {
+                dn "cn=radiator-svc,ou=service-accounts,dc=example,dc=org";
+                password "servicepassword";
+            }
+        }
+
+        # Find the user and collect all group memberships in a single search.
+        search "FIND_USER" {
+            base "ou=people,dc=example,dc=org";
+            scope sub;
+            filter "(&(uid=%{aaa.identity})(objectClass=inetOrgPerson))";
+
+            mapping {
+                vars.dn = entry::dn;
+                user.username = uid;
+                vars.member_of += memberOf;
+            }
+        }
+
+        bind "BIND_USER" {
+            dn vars.dn;
+            password http.authorization.password;
+        }
+    }
+}

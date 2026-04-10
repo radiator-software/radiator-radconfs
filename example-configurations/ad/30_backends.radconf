@@ -1,0 +1,98 @@
+# 30_backends.radconf
+#
+# AD/LDAP Radiator backends configuration
+#
+
+backends {
+    # AD backend
+    ldap "AD_SERVER" {
+        # AD server
+        server "ad.example.com" {
+            # URL for the server
+            # Uncomment the TLS section when using LDAPS
+            # Add certificates when using LDAPS, see 15_certificates-ad-example.radconf
+            #url "ldaps://ad.example.com:636";
+            url "ldap://ad.example.com:389";
+
+            # Operation timeout
+            timeout 3s;
+
+            # How many sockets/connections at maximum to open
+            #connections 10;
+
+            # (Optional) Authentication
+            authentication {
+                 dn "CN=admin,OU=Users,DC=example,DC=com";
+                 password "secretpw";
+
+                # SASL External authentication (for example TLS client certificate)
+                #external;
+
+                # SASL GSS-API authentication;
+                #gss-api;
+            }
+
+            ## (Optional) TLS client configuration
+            #tls {
+            #    # LDAP client's certificate
+            #    #certificate "LDAP_CLIENT_CERT";
+            #
+            #    # LDAP client's private key
+            #    #certificate_key "LDAP_CLIENT_KEY";
+            #
+            #    # LDAP client's certificate's root CA
+            #    #client_ca_certificate "LDAP_CLIENT_CA";
+            #
+            #    # LDAP server's certificate's root CA
+            #    server_ca_certificate "LDAP_SERVER_CA";
+            #
+            #    # Custom certificate verification rules are not supported for LDAP server
+            #}
+        }
+
+        # A single backend can have multiple servers configured
+        #server "ad2" {
+        #   ...
+        #}
+
+        # AD operations
+        # Operations can use e.g. aaa.identity or any set user defined variable as search string
+
+        # Check if user exists in the AD
+        search "FIND_USER" {
+            base "DC=example,DC=com";
+            scope sub;
+            # Set the filter according to fields in your AD
+            filter "userPrincipalName=%{aaa.identity}";
+
+            # Return user DN, user.username without realm and optionally if user is member of any group
+            mapping {
+                vars.dn = entry::dn;
+                user.username = sAMAccountName;
+                # Additional details can be returned also, like group memberships DNs
+                # user.group += memberOf;
+            }
+        }
+
+        # Test user credentials with dynamic bind
+        # The DN used is the one found in previous query
+        bind "BIND_USER" {
+            dn vars.dn;
+            password radius.request.password;
+        }
+
+        # Search user groups user is member of based on the user DN and objectClass
+        # Modify the filter to match your AD fields
+        # If user is not in any group, this query will fail
+        search "USER_GROUPS" {
+            base "DC=example,DC=com";
+            scope sub;
+            filter "(&(objectClass=group)(member=%{vars.dn}))";
+
+            # Return the group CNs
+            mapping {
+                vars.groups += cn;
+            }
+        }
+    }
+}

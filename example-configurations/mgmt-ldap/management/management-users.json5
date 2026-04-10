@@ -1,0 +1,21 @@
+// radiator-interpolated-config-template {"originalTemplate":{"filename":"management-users.json5.radtmpl","checksum":"19404aff"},"items":[{"id":"ADMINISTRATORS","type":"group","instances":[{"USERNAME":"admin","PASSWORD":"ChangeThisPassword!","PRIVILEGE":"all"}]}]}
+// NOTE: This file has been automatically generated from a template file at management-users.json5.radtmpl.
+//
+// The file was generated with the following template values:
+// - Administrators: 1 entry
+//
+// Any manual changes to the below configuration will be lost if the template values are
+// edited via the management UI. You can disable the management UI template form for
+// this configuration file by removing the radiator-interpolated-config-template comment
+// on the first line.
+
+{
+  "users": [
+    {
+      "username": "admin",
+      "password": "{plain}ChangeThisPassword!",
+      "privilege": "all",
+    }
+  ]
+}
+

@@ -1,0 +1,14 @@
+backends {
+    jsonfile "MANAGEMENT_USERS" {
+
+        filename "<root>/management/management-users.json5";
+
+        query "FIND_USER" {
+            mapping {
+                user.username = doc | jsonpath("$.users[?(@.username == '%{aaa.identity}')].username");
+                user.password = doc | jsonpath("$.users[?(@.username == '%{aaa.identity}')].password");
+                user.privilege = doc | jsonpath("$.users[?(@.username == '%{aaa.identity}')].privilege");
+            }
+        }
+    }
+}
