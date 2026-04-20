@@ -55,6 +55,10 @@ Authenticates local users against an LDAP backend while proxying requests for ot
 
 Management UI authentication from LDAP with fallback option to local JSON file.
 
+### NTLM Authentication (`ntlm-ad`)
+
+Configures NTLM with Active Directory as the authentication backend for RADIUS. Includes PAP and EAP authentication.
+
 ### Okta Authentication (`okta-ad`)
 
 Configures Okta as the authentication backend for RADIUS. Includes PAP authentication against Okta, with optional group check included.

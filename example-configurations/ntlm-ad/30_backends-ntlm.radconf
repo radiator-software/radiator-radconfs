@@ -1,0 +1,24 @@
+# 30_backends-ntlm.radconf
+#
+# Radiator backends configuration for NTLM
+#
+
+backends {
+    # NTLM backend
+    ntlm "NTLM_AUTH" {
+        # path to ntlm_auth program
+        program "/usr/bin/ntlm_auth";
+
+        # number of processes to spawn
+        processes 1;
+
+        # optional format for username
+        # use the username part of the username@realm as username
+        username "%{aaa.identity.name}";
+
+        # optional format for domain
+        #domain "%{ aaa.identity.realm | default(\"DOMAIN\") }";
+        # use the realm part of the username@realm as domain
+        domain "%{aaa.identity.realm}";
+    }
+}
