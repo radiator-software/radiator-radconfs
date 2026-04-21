@@ -1,0 +1,31 @@
+# 30_backends-okta.radconf
+#
+# Radiator backends configuration for Okta
+#
+
+backends {
+
+    http "OKTA_ROPC" {
+        url "%{vars.aaa.oauth2.okta-domain}";
+
+        authentication oauth2 {
+            token-url "%{vars.aaa.oauth2.issuer-uri}";
+            client "%{vars.aaa.oauth2.client}";
+            secret "%{vars.aaa.oauth2.secret}";
+            scope "openid profile groups";
+            username "%{radius.request.attr.user-name}";
+            password "%{radius.request.password |reveal | substring(0, -44)}";
+        }
+
+        timeout 30000;
+
+        get "AUTH_USERS" {
+            path "/oauth2/%{vars.aaa.oauth2.authz-server}/v1/userinfo";
+
+            mapping json {
+                user.username = "$.preferred_username";
+                user.group += "$.groups[*]";
+            }
+        }
+    }
+}

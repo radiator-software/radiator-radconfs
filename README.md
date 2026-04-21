@@ -63,6 +63,10 @@ Configures NTLM with Active Directory as the authentication backend for RADIUS. 
 
 Configures Okta as the authentication backend for RADIUS. Includes PAP authentication against Okta, with optional group check included.
 
+### Okta Authentication with Yubikey Cloud (`okta-yubikey-cloud`)
+
+Configures Okta as the authentication backend for RADIUS with Yubikey Cloud OTP check. Does PAP authentication against Okta, Yubikey OTP against Yubico cloud and optional group check.
+
 ### Okta Authentication with Yubikey OPT (`okta-yubikey-otp`)
 
 Configures Okta as the authentication backend for RADIUS with offline Yubikey OTP check from SQLite database. Does PAP authentication against Okta, Yubikey OTP against local database and optional group check.

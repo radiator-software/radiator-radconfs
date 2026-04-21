@@ -1,0 +1,14 @@
+# 30_backends-yubikey.radconf
+#
+# Radiator backends for Yubikey cloud
+#
+
+backends {
+    yubikey "YUBIKEY_CLOUD" {
+        url "https://api.yubico.com/wsapi/2.0/verify";
+        username "%{vars.aaa.yubikey.user}";               # Yubico client ID
+        secret "%{vars.aaa.yubikey.secret}";               # Yubico API key (base64)
+        timeout 5s;
+        # connections 64;                                  # optional, default 1024
+    }
+}
