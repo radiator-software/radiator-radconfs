@@ -34,6 +34,7 @@ aaa {
                 "Operator-Name" radius.request.attr.Operator-Name;
                 "Policy" aaa.policy;
                 "Reason" aaa.reason;
+                "Stop-Location" "%{aaa.stop_location}";
                 "Result" "%{aaa.result}";
                 "Service-Type" radius.request.attr.Service-Type;
                 "Timestamp" datetime.timestamp;
@@ -84,6 +85,7 @@ aaa {
                 "Radiator-Acct-Session-Time" acct.duration;
                 "Radiator-Acct-Status-Type" acct.status;
                 "Reason" "%{aaa.reason}";
+                "Stop-Location" "%{aaa.stop_location}";
                 "Result" "%{aaa.result}";
                 "Timestamp" datetime.timestamp;
                 "User-Name" radius.request.attr.User-Name;
