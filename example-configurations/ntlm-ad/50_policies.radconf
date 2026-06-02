@@ -49,10 +49,16 @@ aaa {
             }
 
             @execute {
-                first {
+
+                # "response" does not authenticate, it populates auth.* namespace
+                # returns true when successfully extracting a matching response into auth.*
+                # returns None when protocol is not present
+                # So "until accept" will stop when extractions succeeds, otherwise moving on to next in list
+                until accept {
                     pap response;
                     mschap response;
                     mschapv2 response;
+                    reject "No valid authentication method found";
                 }
                 # use NTLM_AUTH backend
                 backend "NTLM_AUTH";
@@ -67,7 +73,7 @@ aaa {
         # DEFAULT handler rejects all authentication, accepts accounting
         handler "DEFAULT-PAP" {
             conditions any {
-                aaa.method == any;
+                radius.request.code == any;
             }
             @execute {
                 if all {
@@ -105,7 +111,7 @@ aaa {
             }
 
             @execute {
-                eap {
+                must eap {
                     # EAP-TTLS authentication
                     eap-ttls {
                         tls {
@@ -137,11 +143,16 @@ aaa {
                         # If only non-EAP or EAP within EAP-TTLS can be selected,
                         # the configuration can be simplified.
                         @authentication {
-                            with {
-                                first {
-                                    pap response;
-                                }
-                            } do {
+                            # "response" does not authenticate, it populates auth.* namespace
+                            # returns true when successfully extracting a matching response into auth.*
+                            # returns None when protocol is not present
+                            # So "until accept" will stop when extractions succeeds, otherwise moving on to next in list
+                            until accept {
+                                pap response;
+                                chap response;
+                                mschap response;
+                                mschapv2 response;
+                            } when accept {
                                 backend "NTLM_AUTH";
                             } else {
                                 eap {
@@ -271,14 +282,13 @@ aaa {
                             eap-teap-identity-type user;
                             challenge "Enter user password?";
 
-                            with {
-                                first {
-                                    pap response;
-                                    chap response;
-                                    mschap response;
-                                    mschapv2 response;
-                                }
-                            } do {
+                            # "response" does not authenticate, it populates auth.* namespace
+                            # returns true when successfully extracting a matching response into auth.*
+                            # returns None when protocol is not present
+                            # So "until accept" will stop when extractions succeeds, otherwise moving on to next in list
+                            until accept {
+                                pap response;
+                            } when accept {
                                 backend "NTLM_AUTH";
                             } else {
                                 eap {
@@ -320,7 +330,7 @@ aaa {
         # DEFAULT handler rejects all authentication, accepts accounting
         handler "DEFAULT-EAP" {
             conditions any {
-                aaa.method == any;
+                radius.request.code == any;
             }
             @execute {
                 if all {
@@ -348,7 +358,7 @@ aaa {
         # DEFAULT handler rejects all authentication, accepts accounting
         handler "DEFAULT" {
             conditions any {
-                aaa.method == any;
+                radius.request.code == any;
             }
             @execute {
                 if all {

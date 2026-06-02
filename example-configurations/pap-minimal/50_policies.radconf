@@ -18,7 +18,8 @@ aaa {
                 backend "USERS_INTERNAL_FILE";
 
                 # try to authenticate user with PAP
-                pap;
+                # "must" indicates that only pap authentication is accepted
+                must pap;
             }
 
             @final-execute {
@@ -47,7 +48,7 @@ aaa {
         # DEFAULT handler rejects all authentication, accepts accounting
         handler "DEFAULT" {
             conditions any {
-                aaa.method == any;
+                radius.request.code == any;
             }
 
             @execute {

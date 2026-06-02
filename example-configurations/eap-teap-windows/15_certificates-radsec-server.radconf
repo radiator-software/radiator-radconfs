@@ -1,0 +1,45 @@
+# radiator-interpolated-config-template {"originalTemplate":{"filename":"15_certificates-radsec-server.radtmpl","checksum":"65ab44a8"},"items":[{"id":"RADSEC_SERVER_CERT","value":"RADSEC_SERVER_CERT","extras":{"filenamePath":"<root>/tls/certs/RADSEC_SERVER_CERT.pem"}},{"id":"RADSEC_SERVER_KEY","value":"RADSEC_SERVER_KEY","extras":{"filenamePath":"<root>/tls/keys/RADSEC_SERVER_KEY.pem"}},{"id":"RADSEC_SERVER_KEY_PASSWORD","value":"whatever"},{"id":"RADSEC_SERVER_CLIENT_CA_FILE","value":"RADSEC_SERVER_CLIENT_CA","extras":{"filenamePath":"<root>/tls/ca/RADSEC_SERVER_CLIENT_CA.pem"}},{"id":"RADSEC_SERVER_CLIENT_CA_DIRECTORY_PATH","value":"RADSEC_SERVER_CLIENT_CA","extras":{"filenamePath":"<root>/tls/ca/RADSEC_SERVER_CLIENT_CA"}},{"id":"RADSEC_SERVER_CLIENT_CA_DIRECTORY_REFRESH_INTERVAL","value":"1800000"}]}
+# NOTE: This file has been automatically generated from a template file at 15_certificates-radsec-server.radtmpl.
+#
+# The file was generated with the following template values:
+# - RadSec server certificate (chain) file: RADSEC_SERVER_CERT
+# - RadSec server private key file: RADSEC_SERVER_KEY
+# - RadSec server private key password if any: whatever
+# - RadSec server client CA certificate file: RADSEC_SERVER_CLIENT_CA
+# - RadSec server client CA certificate directory: RADSEC_SERVER_CLIENT_CA
+# - RadSec server client CA certificate directory refresh interval: 1800000
+#
+# Any manual changes to the below configuration will be lost if the template values are
+# edited via the management UI. You can disable the management UI template form for
+# this configuration file by removing the radiator-interpolated-config-template comment
+# on the first line.
+
+# Certificates configuration generated from template
+#
+# Each certificate/key is uploaded to tls/certs, tls/key or tls/ca and
+# configured here. CA directories are stored under tls/ca.
+
+certificates {
+    x509 "RADSEC_SERVER_CERT" {
+        filename "<root>/tls/certs/RADSEC_SERVER_CERT.pem";
+    }
+
+    key "RADSEC_SERVER_KEY" {
+        filename "<root>/tls/keys/RADSEC_SERVER_KEY.pem";
+        password "whatever";
+    }
+
+    x509 "RADSEC_SERVER_CLIENT_CA" {
+        filename "<root>/tls/ca/RADSEC_SERVER_CLIENT_CA.pem";
+    }
+
+    x509-directory "RADSEC_SERVER_CLIENT_CA_DIRECTORY" {
+        directory "<root>/tls/ca/RADSEC_SERVER_CLIENT_CA";
+        # The interval in milliseconds for checking the contents of RadSec
+        # server client CA certificate directory for new CA certificates.
+        # 30 min = 30*60*1000 = 1 800 000 milliseconds.
+        #interval 1800000;
+        interval 1800000;
+    }
+
+}

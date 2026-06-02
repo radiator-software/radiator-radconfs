@@ -1,0 +1,47 @@
+# 20_capture.radconf
+#
+# Capture allows dumping received and sent Radius
+# messages to console (stdout) or file (pcap format)
+#
+# Capture can be enabled, for example, within:
+#
+# servers {
+#   radius "RADIUS_UDP_1812" {
+#       capture CAPTURE_TO_CONSOLE;
+#
+
+captures {
+
+    capture "CAPTURE_TO_CONSOLE" {
+        console;
+    }
+
+    capture "CAPTURE_TO_CONSOLE_AND_DIRECTORY" {
+        console;
+        file {
+            directory "/var/log/radiator/captures";
+        }
+    }
+
+    capture "CAPTURE_TO_CONSOLE_AND_FILE" {
+        console;
+        file {
+            directory "/var/log/radiator/captures";
+            filename "radiator-server.pcap";
+        }
+    }
+
+    capture "CAPTURE_TO_DIRECTORY" {
+        file {
+            directory "/var/log/radiator/captures";
+        }
+    }
+
+    capture "CAPTURE_TO_FILE" {
+        file {
+            directory "/var/log/radiator/captures";
+            filename "radiator-server.pcap";
+        }
+    }
+
+} # captures

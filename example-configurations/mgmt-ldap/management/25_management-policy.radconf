@@ -6,7 +6,7 @@ aaa {
 
         handler "AUTHENTICATION" {
             @execute {
-                with all {
+                until reject ignore {
                     try backend {
                         name "MGMT_LDAP";
                         query "FIND_USER";
@@ -19,8 +19,8 @@ aaa {
                     } else {
                         modify { user.privilege = "monitor"; }
                     }
-                } do {
-                    any {
+                } when accept {
+                    until accept {
                         http-management-authentication;
                         backend {
                             name "MGMT_LDAP";

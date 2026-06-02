@@ -17,7 +17,7 @@ aaa {
                   vars.totp_enabled == 1;
 
                 } then {
-                  pap {
+                  must pap {
                    # Uses all but last 6 characters for PAP password.
                     range -6 0 exclusive;
                   }
@@ -38,7 +38,7 @@ aaa {
 
                 # If MFA is not enabled for user in backend, using only PAP.
                 } else {
-                  pap;
+                  must pap;
                 }
             }
 

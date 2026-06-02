@@ -97,7 +97,7 @@ aaa {
         # DEFAULT handler rejects all authentication, accepts accounting
         handler "DEFAULT-AUTH" {
             conditions any {
-                aaa.method == any;
+                radius.request.code == any;
             }
             @execute {
                 if all {
@@ -131,7 +131,7 @@ aaa {
         # DEFAULT handler rejects all authentication, accepts accounting
         handler "DEFAULT" {
             conditions any {
-                aaa.method == any;
+                radius.request.code == any;
             }
             @execute {
                 if all {

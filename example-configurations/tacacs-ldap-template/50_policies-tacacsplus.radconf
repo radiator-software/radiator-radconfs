@@ -34,7 +34,7 @@ aaa {
                 name "LDAPSERVER";
                 query "find_user";
             }
-            any {
+            until accept {
                 pap  authentication;
                 chap authentication;
             }

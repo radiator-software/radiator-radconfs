@@ -14,7 +14,7 @@ backends {
             secret "%{vars.aaa.oauth2.secret}";
             scope "openid profile groups";
             username "%{radius.request.attr.user-name}";
-            password "%{radius.request.password |reveal | substring(0, -44)}";
+            password "%{radius.request.password | yubikey(password-otp, password)}";
         }
 
         timeout 30000;

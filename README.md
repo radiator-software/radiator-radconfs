@@ -23,6 +23,10 @@ AD authentication with optional group check included.
 
 Empty configuration for clearing the existing configuration for easy start over.
 
+### EAP-TEAP with Windows user and machine authentication (`eap-teap-windows`)
+
+EAP-TEAP authentication for Windows with inner EAP-TLS machine authentication and EAP-MSCHAPv2 user authentication.
+
 ### EAP-TLS with Microsoft Entra ID Authorisation (`eap-tls-entra-authz`)
 
 Demonstrates EAP-TLS certificate-based authentication with Microsoft Entra ID as the authorisation backend. Policies check user group membership in Entra ID to authorise access.

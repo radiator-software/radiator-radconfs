@@ -1,4 +1,4 @@
-// radiator-interpolated-config-template {"originalTemplate":{"filename":"management-users.json5.radtmpl","checksum":"19404aff"},"items":[{"id":"ADMINISTRATORS","type":"group","instances":[{"USERNAME":"admin","PASSWORD":"ChangeThisPassword!","PRIVILEGE":"all"}]}]}
+// radiator-interpolated-config-template {"originalTemplate":{"filename":"management-users.json5.radtmpl","checksum":"d657322e"},"items":[{"id":"ADMINISTRATORS","type":"group","instances":[{"USERNAME":"admin","PASSWORD":"ChangeThisPassword!","PRIVILEGE":"all"}]}]}
 // NOTE: This file has been automatically generated from a template file at management-users.json5.radtmpl.
 //
 // The file was generated with the following template values:

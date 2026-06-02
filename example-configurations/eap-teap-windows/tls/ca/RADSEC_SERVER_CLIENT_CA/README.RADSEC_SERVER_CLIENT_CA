@@ -1,0 +1,19 @@
+README.RADSEC_SERVER_CLIENT_CA
+
+This directory can contain multiple CA certificates, which are used
+to validate client certificates the RadSec (RADIUS over TLS) clients
+are using to connect to the RadSec server (TCP 2083).
+
+You can copy an example CA certificate such as:
+
+intermediate-CA-I1-crt.pem
+intermediate-CA-I2-crt.pem
+root-CA-crt.pem
+
+from the previous directory to this directory to allow all certificates
+validated by that CA or intermediate CAs under it to connect to this
+server.
+
+Or you can add your own root CA certificate to use it to verify client
+certificates.
+

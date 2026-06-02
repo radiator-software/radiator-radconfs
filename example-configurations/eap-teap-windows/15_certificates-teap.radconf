@@ -1,0 +1,28 @@
+# 15_certificates-teap.radconf
+#
+# Certificates for EAP-TEAP and inner EAP-TLS
+#
+
+certificates {
+  x509 "EAP_TEAP_SERVER_CERT" {
+    filename "<root>/tls/certs/server-I2-certchain.pem";
+  }
+
+  key "EAP_TEAP_KEY" {
+    filename "<root>/tls/keys/server-key.pem";
+    password "whatever";
+  }
+
+  x509 "EAP_TEAP_CLIENT_CA" {
+    filename "<root>/tls/ca/EAP_SERVER_CLIENT_CA.pem";
+  }
+
+  x509-directory "EAP_TEAP_CLIENT_CA_DIRECTORY" {
+    directory "<root>/tls/ca/EAP_SERVER_CLIENT_CA";
+    # The interval in milliseconds for checking the contents of RadSec
+    # server client CA certificate directory for new CA certificates.
+    # 30 min = 30*60*1000 = 1 800 000 milliseconds.
+    #interval 1800000;
+    interval 1800000;
+  }
+}

@@ -42,6 +42,29 @@ aaa {
                 invoke "SET_TENANT_INFORMATION";
                 invoke "SET_YUBIKEY_INFORMATION";
 
+                # Extract the YubiKey public UID once before SQL so malformed OTPs
+                # fail as normal authentication rejects instead of backend errors.
+                modify vars.presented_yubikey_public_uid = radius.request.password | yubikey(password-otp, public-uid) | recover(none);
+
+                if all {
+                    vars.presented_yubikey_public_uid == none;
+                } then {
+                    reject "Malformed YubiKey OTP";
+                }
+
+                # Check the Yubikey belongs to the user authenticating
+                backend {
+                    name "JSONFILE_USERS_YUBIKEY_UID";
+                    query "FIND_UID";
+                }
+
+                if any {
+                    vars.presented_yubikey_public_uid != vars.yubikey-uid;
+                } then {
+                    reason "Yubikey does not belong to this user";
+                    reject;
+                }
+
                 # Okta ROPC authentication with username and password
                 try {
                     backend {
@@ -61,7 +84,7 @@ aaa {
                 # Validate with YubiKey Cloud (last 44 characters)
                 backend {
                     name "YUBIKEY_CLOUD";
-                    range -44 0;
+                    secret radius.request.password | yubikey(password-otp, otp);
                 }
 
                 ## Match user groups from Okta, optional
@@ -97,7 +120,7 @@ aaa {
         # DEFAULT handler rejects all authentication, accepts accounting
         handler "DEFAULT" {
             conditions any {
-                aaa.method == any;
+                radius.request.code == any;
             }
             @execute {
                 if all {

@@ -14,7 +14,7 @@ aaa {
             }
 
             @execute {
-                eap {
+                must eap {
                     eap-tls {
                         tls {
 
@@ -70,9 +70,9 @@ aaa {
                         @authentication {
 
                             # Try PAP authentication
-                            with {
+                            until end {
                                 pap response;
-                            } do {
+                            } when accept {
                                 # Try to authenticate the user with the PAP response
                                 backend {
                                     name "MS_RESOURCE_OWNER_PASSWORD_CREDENTIALS";
@@ -179,7 +179,7 @@ aaa {
         # DEFAULT handler rejects all authentication, accepts accounting
         handler "DEFAULT" {
             conditions any {
-                aaa.method == any;
+                radius.request.code == any;
             }
             @execute {
                 if all {

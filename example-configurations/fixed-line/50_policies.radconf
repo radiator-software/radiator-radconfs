@@ -82,7 +82,7 @@ aaa {
                    }
 
                    # Try to authenticate user with PAP
-                   pap;
+                   must pap;
 
                    # Authorization based on DB return values
                    # Verify that values in the request match the values in the DB
@@ -131,7 +131,7 @@ aaa {
         # DEFAULT handler rejects all authentication, accepts accounting
         handler "DEFAULT" {
             conditions any {
-                aaa.method == any;
+                radius.request.code == any;
             }
             @execute {
                 if all {

@@ -1,0 +1,187 @@
+# 50_policies.radconf
+#
+# Radiator policy configuration
+#
+
+aaa {
+
+    # first matching policy is selected so for all accounting
+    # to be processed within its own policy, it should
+    # be the first one and match all accounting requests
+    policy "ACCOUNTING" {
+
+        conditions all {
+            # match all accounting requests
+            radius.request.code == radius.ACCOUNTING_REQUEST;
+        }
+
+        handler "ACCOUNTING" {
+            conditions all {
+                # match only RADIUS accounting requests
+                radius.request.code == radius.ACCOUNTING_REQUEST;
+            }
+
+            @execute {
+                # accept all accounting
+                accept;
+            }
+
+            # log all accounting
+            @final-execute {
+                invoke "LOG_ACCOUNTING";
+            }
+        }
+    }
+
+    # policy for EAP-TEAP machine and user authentication
+    policy "AUTHENTICATION" {
+        conditions any {
+            radius.request.code == radius.ACCESS_REQUEST;
+        }
+
+        # handler for EAP-TEAP
+        handler "EAPTEAP" {
+            conditions all {
+                # match only RADIUS authentication requests
+                radius.request.code == radius.ACCESS_REQUEST;
+                # Additional conditions like realm can be added
+                #aaa.identity.realm == "example.com";
+            }
+
+            @execute {
+                must eap {
+                    eap-teap {
+                        tls {
+                            # EAP server private key
+                            certificate_key "EAP_TEAP_KEY";
+
+                            # EAP server certificate chain file
+                            certificate "EAP_TEAP_SERVER_CERT";
+
+                            # Do not require client certificate verification for
+                            # outer EAP-TLS
+                            require_client_certificate false;
+
+                            # CA certificate for verifying EAP-TLS
+                            # client certificates
+                            #client_ca_certificate "EAP_TEAP_CLIENT_CERT";
+
+                            # CA certificate directory for verifying
+                            # client certificates with multiple CA certificates
+                            client_ca_certificate "EAP_TEAP_CLIENT_CA_DIRECTORY";
+
+                            # Only TLSv1.2 is supported on outer EAP-TLS
+                            min_protocol_version tlsv12;
+                            max_protocol_version tlsv12;
+                        }
+
+                        @authentication {
+                            # Start with machine authentication and continue from there to user
+                            # authentication. Make sure the Windows side primary and secondary
+                            # client authentication EAP method matches the EAP method order here
+                            # if machine and user authentication is using different EAP methods
+                            eap-teap-identity-type "machine";
+
+                            # Try to authenticate machine with any of the following methods
+                            eap {
+                                eap-tls {
+                                    tls {
+                                    # EAP server private key
+                                    certificate_key "EAP_TEAP_KEY";
+
+                                    # EAP server certificate chain file
+                                    certificate "EAP_TEAP_SERVER_CERT";
+
+                                    # Require client certificate
+                                    require_client_certificate true;
+
+                                    # CA certificate for verifying EAP-TLS
+                                    # client certificates
+                                    #client_ca_certificate "EAP_TEAP_CLIENT_CERT";
+
+                                    # CA certificate directory for verifying
+                                    # client certificates with multiple CA certificates
+                                    client_ca_certificate "EAP_TEAP_CLIENT_CA_DIRECTORY";
+                                }
+                                }
+                            }
+
+                            # From chaining machine and user identity authentication
+                            # If only machine or user authentication is done, these are not needed
+                            eap-teap-eap-identity-request;
+                            # Set 60s timeout so user has time to type username and password
+                            eap-teap-intermediate-result 60000;
+
+                            # Request EAP-TEAP user identity
+                            eap-teap-identity-type user;
+
+                            # Authenticate username and password from backend
+                            eap {
+                               timeout 60s;
+                                eap-mschapv2 {
+                                    @authentication {
+                                        backend {
+                                            name "JSONFILE_USERS_INTERNAL";
+                                            query "FIND_USER";
+                                        }
+                                        mschapv2;
+                                    }
+                                }
+                            }
+                        }
+
+                        # Log inner authentication requests
+                        @post-authentication {
+                            invoke "LOG_AUTHENTICATION";
+                        }
+                    }
+                }
+
+                # Add default VLAN attributes
+                modify {
+                    radius.reply.attr.Tunnel-Type:1 = "VLAN";
+                    # with FreeRADIUS dictionary
+                    #radius.reply.attr.Tunnel-Medium-Type:1 = "IEEE-802";
+                    # with Radiator dictionary
+                    radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
+                    # assign VLAN ID 145 to RADIUS attribute
+                    radius.reply.attr.Tunnel-Private-Group-Id:1 = "145";
+                }
+            }
+
+            @final-execute {
+                invoke "LOG_AUTHENTICATION";
+            }
+        }
+    }
+
+
+    # DEFAULT policy is to reject authentication and accept accounting
+    # matches if none of the previous policies match
+    policy "DEFAULT" {
+
+        # a policy without conditions will handle any request
+
+        # DEFAULT handler rejects all authentication, accepts accounting
+        handler "DEFAULT" {
+            conditions any {
+                radius.request.code == any;
+            }
+
+            @execute {
+                if all {
+                    radius.request.code == radius.ACCOUNTING_REQUEST;
+                } then {
+                    accept;
+                } else {
+                    reason "DEFAULT: No other matching authentication handler found.";
+                    reject;
+                }
+            }
+            @final-execute {
+                invoke "LOG_ACCOUNTING";
+                invoke "LOG_AUTHENTICATION";
+            }
+        }
+    }
+}
