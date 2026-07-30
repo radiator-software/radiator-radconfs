@@ -1,0 +1,32 @@
+# radiator-interpolated-config-template {"originalTemplate":{"filename":"15_management-certificates.radtmpl","checksum":"60383691"},"items":[{"id":"MANAGEMENT_API_CERT","value":"MANAGEMENT_API_CERT","extras":{"filenamePath":"<root>/management/tls/certs/MANAGEMENT_API_CERT.pem"}},{"id":"MANAGEMENT_API_KEY","value":"MANAGEMENT_API_KEY","extras":{"filenamePath":"<root>/management/tls/keys/MANAGEMENT_API_KEY.pem"}},{"id":"MANAGEMENT_API_KEY_PASSWORD","value":"whatever"}]}
+# NOTE: This file has been automatically generated from a template file at 15_management-certificates.radtmpl.
+#
+# The file was generated with the following template values:
+# - Management UI/API certificate (chain) file: MANAGEMENT_API_CERT
+# - Management UI/API private key file for the certificate: MANAGEMENT_API_KEY
+# - Management UI/API private key password if any: whatever
+#
+# Any manual changes to the below configuration will be lost if the template values are
+# edited via the management UI. You can disable the management UI template form for
+# this configuration file by removing the radiator-interpolated-config-template comment
+# on the first line.
+
+# Certificates configuration generated from template
+#
+# Each certificate/key is uploaded to tls/certs, tls/key or tls/ca and
+# configured here. CA directories are stored under tls/ca.
+
+certificates {
+  # Certificate
+  x509 "MANAGEMENT_API_CERT" {
+    filename "<root>/management/tls/certs/MANAGEMENT_API_CERT.pem";
+  }
+
+  # Private key &lt;root&gt;/management/tls/keys/MANAGEMENT_API_KEY.pem
+  key "MANAGEMENT_API_KEY" {
+    filename "<root>/management/tls/keys/MANAGEMENT_API_KEY.pem";
+    password "whatever";
+  }
+
+
+}

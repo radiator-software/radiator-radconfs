@@ -11,7 +11,7 @@ For detailed instructions on importing and exporting configurations, see the [Co
 
 ## Browsing Configurations
 
-Unzipped versions of all example configurations are available under the [`example-configurations/`](example-configurations/) directory for convenient browsing and review without needing to extract the zip archives.
+Unzipped versions of all example configurations are available in this directory for convenient browsing and review without needing to extract the zip archives.
 
 ## Example Configurations
 

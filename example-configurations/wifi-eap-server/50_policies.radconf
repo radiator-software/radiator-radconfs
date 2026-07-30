@@ -177,11 +177,19 @@ aaa {
                         # If only non-EAP or EAP within EAP-TTLS can be selected,
                         # the configuration can be simplified.
                         @authentication {
-                            # search for username from backend "JSONFILE_USERS_INTERNAL"
-                            until end {
-                                backend { name "JSONFILE_USERS_INTERNAL"; query "FIND_USER"; }
+                            # Determine whether the tunneled payload contains a
+                            # non-EAP response before looking up its user. An
+                            # EAP-Response/Identity also supplies a username,
+                            # so a user lookup cannot distinguish these paths.
+                            until accept {
+                                pap response;
+                                chap response;
+                                mschap response;
+                                mschapv2 response;
                             } when accept {
-                                # Try to authenticate user with any of the following methods
+                                backend { name "JSONFILE_USERS_INTERNAL"; query "FIND_USER"; }
+
+                                # Authenticate the extracted non-EAP response.
                                 until accept reject {
                                     pap;
                                     chap;

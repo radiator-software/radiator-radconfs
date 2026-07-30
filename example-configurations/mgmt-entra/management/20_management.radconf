@@ -1,0 +1,29 @@
+management {
+    http {
+        # Listener configuration
+        listen {
+            protocol tls;
+            port 8443;
+            ip 0.0.0.0;
+            tls {
+                 # HTTP management server's certificate
+                 certificate "MANAGEMENT_API_CERT";
+
+                 # HTTP management server's private key
+                 certificate_key "MANAGEMENT_API_KEY";
+
+                 # Do not require client certificates = false
+                 require_client_certificate false;
+
+                 # Client certificates' root CA
+                 #client_ca_certificate "MANAGEMENT_API_CLIENT_CA";
+            }
+        }
+
+	# allow these clients to connect
+        clients "MANAGEMENT_ACCESS_ALLOW_LIST";
+
+	# use this policy to authenticate management UI users
+        policy "MANAGEMENT_POLICY";
+    }
+}

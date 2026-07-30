@@ -1,0 +1,103 @@
+# management/25_management-policy.radconf
+
+
+aaa {
+    policy "MANAGEMENT_POLICY" {
+        conditions all {
+            http.management == true;
+        }
+
+        handler "AUTHENTICATION" {
+            @execute {
+                # Populate variables before Entra backend uses them.
+                invoke "SET_TENANT_INFORMATION";
+
+                if all {
+                    # Entra users log in with a UPN so aaa.identity.realm is set.
+                    # Local users (e.g. "admin") have no realm or have different realm
+                    # Check either that no realm is set (currently done) or that realm
+                    # matches to the local one
+                    aaa.identity.realm != none;
+                } then {
+                    # ---------- Entra realm ----------
+                    # App-only Graph lookups: work for login (basic auth) AND cookie
+                    # requests, no user password needed. Recomputed every request.
+                    backend {
+                        name "MS_CLIENT_CREDENTIALS";
+                        query "AUTH_USERS";
+                    }
+                    backend {
+                        name "MS_CLIENT_CREDENTIALS";
+                        query "GET_GROUPS";
+                    }
+
+                    map user.group {
+                        "Staff" => {
+                            modify {
+                                user.radiatordb_role = "admin";
+                                user.privilege = "all";
+                            }
+                        }
+                        "Ops" => {
+                            modify {
+                                user.radiatordb_role = "operations";
+                                user.privilege = "all";
+                            }
+                        }
+                        any => {
+                            modify {
+                                user.privilege = "monitor";
+                            }
+                        }
+                    }
+
+                    # Session cookie validates directly; at login the ROPC token
+                    # fetch verifies the submitted password.
+                    until accept {
+                        # Subsequent requests: a valid session cookie authenticates.
+                        http-management-authentication;
+
+                        # Login (no session): password first, then MFA.
+                        until end {
+                            try backend {
+                                name "MS_RESOURCE_OWNER_PASSWORD_CREDENTIALS";
+                                query "VERIFY_LOGIN";
+                            }
+                        } when accept {
+                            # Password OK -> trigger the MFA push and wait for the result.
+                            backend {
+                                name "ENTRA_MFA";
+                                query "MFA_CHALLENGE";
+                            }
+                            map vars.challenge_result_value {
+                                "Success" => {
+                                    accept;
+                                }
+                                any => {
+                                    reason "%{vars.challenge_result_message}";
+                                    reject;
+                                }
+                            }
+                        } else {
+                            reject "Authentication failed";
+                        }
+                    } when accept {
+                        accept;
+                    } else {
+                        reject "Authentication failed";
+                    }
+                } else {
+                    # ---------- Local failsafe realm ----------
+                    # Sets user.username/password/privilege from static config,
+                    # then validates basic-auth or session cookie.
+                    backend {
+                        name "MANAGEMENT_USERS";
+                        query "FIND_USER";
+                    }
+                    http-management-authentication;
+                }
+            }
+        }
+    }
+}
+
