@@ -80,7 +80,7 @@ aaa {
                             # authentication. Make sure the Windows side primary and secondary
                             # client authentication EAP method matches the EAP method order here
                             # if machine and user authentication is using different EAP methods
-                            eap-teap-identity-type "machine";
+                            eap-teap-identity-type machine;
 
                             # Try to authenticate machine with any of the following methods
                             eap {
@@ -110,7 +110,7 @@ aaa {
                             # If only machine or user authentication is done, these are not needed
                             eap-teap-eap-identity-request;
                             # Set 60s timeout so user has time to type username and password
-                            eap-teap-intermediate-result 60000;
+                            eap-teap-intermediate-result 60s;
 
                             # Request EAP-TEAP user identity
                             eap-teap-identity-type user;
