@@ -55,6 +55,10 @@ Configuration for fixed-line broadband scenarios such as FTTP and xDSL. Uses SQL
 
 Authenticates local users against an LDAP backend while proxying requests for other realms via RadSec (e.g., to eduroam). Combines local LDAP authorisation with federated proxy functionality.
 
+### Management UI with Microsoft Entra ID (`mgmt-entra`)
+
+Management UI authentication from Microsoft Entra ID with fallback option to local JSON file.
+
 ### Management UI with LDAP (`mgmt-ldap`)
 
 Management UI authentication from LDAP with fallback option to local JSON file.
