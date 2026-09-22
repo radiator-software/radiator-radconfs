@@ -5,7 +5,7 @@
 # - Clients: 0 entries
 #
 # Any manual changes to the below configuration will be lost if the template values are
-# edited via the management UI. You can disable the management UI template form for
+# edited via Radiator UI. You can disable Radiator UI template form for
 # this configuration file by removing the radiator-interpolated-config-template comment
 # on the first line.
 

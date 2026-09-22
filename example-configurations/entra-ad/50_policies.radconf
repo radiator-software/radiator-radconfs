@@ -56,9 +56,14 @@ aaa {
                 invoke "SET_TENANT_INFORMATION";
 
                 # Use OAuth2 authentication
-                backend {
-                    name "MS_RESOURCE_OWNER_PASSWORD_CREDENTIALS";
-                    query "AUTH_USERS";
+                until end {
+                    backend {
+                        name "MS_RESOURCE_OWNER_PASSWORD_CREDENTIALS";
+                        query "AUTH_USERS";
+                    }
+                } when error {
+                    reason "Microsoft Entra ID authentication failed.";
+                    reject;
                 }
 
                 # authorization logic
@@ -74,9 +79,14 @@ aaa {
                     }
                 }
                 # Fetch user groups
-                backend {
-                    name "MS_RESOURCE_OWNER_PASSWORD_CREDENTIALS";
-                    query "GET_GROUPS";
+                until end {
+                    backend {
+                        name "MS_RESOURCE_OWNER_PASSWORD_CREDENTIALS";
+                        query "GET_GROUPS";
+                    }
+                } when error {
+                    reason "Microsoft Entra ID group lookup failed.";
+                    reject;
                 }
                 # Match user groups
                 map user.group {

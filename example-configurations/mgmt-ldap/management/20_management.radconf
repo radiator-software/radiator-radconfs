@@ -23,7 +23,7 @@ management {
 	# allow these clients to connect
         clients "MANAGEMENT_ACCESS_ALLOW_LIST";
 
-	# use this policy to authenticate management UI users
+	# use this policy to authenticate Radiator UI users
         policy "MANAGEMENT_POLICY";
     }
 }

@@ -46,8 +46,9 @@ aaa {
         # handler for RADIUS authentication
         handler "AUTHENTICATION-PAP" {
             conditions all {
-                # match only RADIUS authentication requests
+                # match only RADIUS PAP authentication requests
                 radius.request.code == radius.ACCESS_REQUEST;
+                radius.request.method == radius.METHOD_PAP;
             }
 
             @execute {

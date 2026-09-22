@@ -45,9 +45,9 @@ Change LDAP configuration to match your database:
 * configuration includes debug clauses to visualize the AAA flow, can be removed
 
 
-## Management UI
+## Radiator UI
 This example has Radiator 10 GUI activated:
-  - Management UI is open to all IP addresses, protected by username and password and management certificates, configured in `/var/lib/radiator/management/`
+  - Radiator UI is open to all IP addresses, protected by username and password and management certificates, configured in `/var/lib/radiator/management/`
   - Use https://YOUR-IP-ADDRESS:8443/ to access
   - Default username: _admin_ and password: _ChangeThisPassword!_
 

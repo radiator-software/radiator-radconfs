@@ -1,11 +1,11 @@
 # radiator-config-template
 {
-  "description": "Upload and replace Management UI and API certificates and keys",
+  "description": "Upload and replace Radiator UI and Management API certificates and keys",
   "items": [
     {
       "id": "MANAGEMENT_API_CERT",
-      "label": "Management UI/API certificate (chain) file",
-      "description": "Management UI/API certificate (chain) file",
+      "label": "Radiator UI and Management API certificate (chain) file",
+      "description": "Radiator UI and Management API certificate (chain) file",
       "type": "file_upload",
       "file_type": "cert",
       "path": "<root>/management/tls/certs",
@@ -15,8 +15,8 @@
     },
     {
       "id": "MANAGEMENT_API_KEY",
-      "label": "Management UI/API private key file for the certificate",
-      "description": "Management UI/API private key file",
+      "label": "Radiator UI and Management API private key file for the certificate",
+      "description": "Radiator UI and Management API private key file",
       "type": "file_upload",
       "file_type": "key",
       "path": "<root>/management/tls/keys",
@@ -26,8 +26,8 @@
     },
     {
       "id": "MANAGEMENT_API_KEY_PASSWORD",
-      "label": "Management UI/API private key password if any",
-      "description": "Password for Management UI/API for private key file in case the private key is password protected",
+      "label": "Radiator UI and Management API private key password if any",
+      "description": "Password for Radiator UI and Management API for private key file in case the private key is password protected",
       "type": "secret",
       "optional": true
     }
@@ -41,7 +41,7 @@
 
 certificates {
   {{#if MANAGEMENT_API_CERT_FILE}}
-  # Certificate {{CERT_ID}}
+  # Certificate
   x509 "MANAGEMENT_API_CERT" {
     filename "{{{MANAGEMENT_API_CERT_FILE}}}";
   }

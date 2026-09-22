@@ -29,8 +29,8 @@ Policy configuration in `50_policies.radconf`
 The Entra tenant information is set in `25_pipeline-entra-credentials.radconf`
  - Fill your tenant ID, Application client ID and Application secret here.
 
-## Management UI
+## Radiator UI
 This example has Radiator 10 GUI activated:
-  - Management UI is open to all IP addresses, protected by username and password and management certificates, configured in `/var/lib/radiator/management/`
+  - Radiator UI is open to all IP addresses, protected by username and password and management certificates, configured in `/var/lib/radiator/management/`
   - Use https://YOUR-IP-ADDRESS:8443/ to access
   - Default username: _admin_ and password: _ChangeThisPassword!_

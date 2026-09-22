@@ -1,6 +1,6 @@
 # radiator-config-template
 {
-  "description": "Manage Radiator UI/API IP access list",
+  "description": "Manage Radiator UI and Management API IP access list",
   "items": [
     {
       "id": "CLIENTS",

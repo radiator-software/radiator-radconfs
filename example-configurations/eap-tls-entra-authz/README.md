@@ -28,10 +28,10 @@ Policy configuration in `50_policies.radconf`
   - DEFAULT policy for catching requests, which do not match other handlers
   - Policies have example conditions, when checking the conditions the policy with first match is used.
 
-## Management UI
+## Radiator UI
 
 This example has Radiator 10 GUI activated:
-  - Management UI is open to all IP addresses, protected by username and password and management certificates, configured in /var/lib/radiator/management/
+  - Radiator UI is open to all IP addresses, protected by username and password and management certificates, configured in /var/lib/radiator/management/
   - Use https://YOUR-IP-ADDRESS:8443/ to access
   - Default username: *admin*
   - Default password: *ChangeThisPassword!*
