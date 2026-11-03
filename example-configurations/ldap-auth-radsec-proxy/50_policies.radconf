@@ -32,7 +32,7 @@ aaa {
                     reject;
                 }
             }
-            @final-execute {
+            @final_execute {
                 if all {
                     radius.request.code == radius.ACCOUNTING_REQUEST;
                 } then {
@@ -59,7 +59,7 @@ aaa {
                     reject;
                 }
             }
-            @final-execute {
+            @final_execute {
                 if all {
                     radius.request.code == radius.ACCOUNTING_REQUEST;
                 } then {
@@ -82,7 +82,7 @@ aaa {
             @execute {
                 must eap {
                     # EAP-TLS client authentication
-                    eap-tls {
+                    eap_tls {
                         tls {
                             # EAP server private key
                             certificate_key "EAP_SERVER_KEY";
@@ -100,7 +100,7 @@ aaa {
 
                             # (Optional) Client certificate's verification policy
                             @verification {
-                                # Reject the certificate if any of following conditions fails
+                                # Reject the certificate if any of the following conditions is true
                                 if any {
                                     # Basic certification verification failed
                                     cert.valid != true;
@@ -115,8 +115,8 @@ aaa {
                             }
                         }
 
-                        # post-authentication can be used e.g. to pick up fields from the certificate to a variable for later use
-                        @post-authentication {
+                        # post_authentication can be used e.g. to pick up fields from the certificate to a variable for later use
+                        @post_authentication {
                             # check if there is a SubjectAltName email
                             if any {
                                 cert.subject_alt.email != none;
@@ -125,7 +125,7 @@ aaa {
                             # vars is available everywhere so it can be used in authorization with backend
                             # instead of email, other Subject or Issuer fields can also be used like cert.subject.cn
                             then {
-                                modify vars.certemail = cert.subject_alt.email;
+                                vars.certemail = cert.subject_alt.email;
                             }
 
                             # log authentication requests
@@ -140,7 +140,7 @@ aaa {
                 #rewrite aaa.identity /^([^@]+).*/ "$1";
                 #rewrite vars.certemail /^([^@]+).*/ "$1";
 
-                # Optionally search for user from LDAP
+                # Search for the user from LDAP, the request is rejected if no entry is found
                 backend {
                     name "ldap.example.com";
                     query "find_user";
@@ -157,9 +157,7 @@ aaa {
                    vars.sqlgroup == none;
                    vars.sqlgroup == "";
                 } then {
-                    modify {
-                        radius.reply.attr.Aruba-AirGroup-Shared-Group = vars.sqlgroup;
-                    }
+                    radius.reply.attr.Aruba-AirGroup-Shared-Group = vars.sqlgroup;
                 } else {
                     reject;
                 }
@@ -170,9 +168,7 @@ aaa {
                 #    cache.groups[vars.certemail] != none;
                 #} then {
                 #    # Assign group from a cache
-                #    modify {
-                #        user.group = cache.groups[vars.certemail][*];
-                #    }
+                #    user.group = cache.groups[vars.certemail][*];
                 #} else {
                 #    # Search for user groups from backend "ldap.example.com"
                 #    backend {
@@ -180,28 +176,22 @@ aaa {
                 #        query "user_groups";
                 #    }
                 #    # Insert groups into a cache
-                #    modify {
-                #        cache.groups[vars.certemail] = user.group;
-                #    }
+                #    cache.groups[vars.certemail] = user.group;
                 #}
 
                 ## Set VLAN attributes based on user's LDAP group
                 #map user.group {
                 #    "demo_group" => {
-                #         modify {
-                #             radius.reply.attr.Tunnel-Type:1 = "VLAN";
-                #             radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
-                #             # assign VLAN ID 125 to RADIUS attribute
-                #             radius.reply.attr.Tunnel-Private-Group-Id:1 = "125";
-                #         }
+                #         radius.reply.attr.Tunnel-Type:1 = "VLAN";
+                #         radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
+                #         # assign VLAN ID 125 to RADIUS attribute
+                #         radius.reply.attr.Tunnel-Private-Group-Id:1 = "125";
                 #    }
                 #    "admins_group" => {
-                #         modify {
-                #             radius.reply.attr.Tunnel-Type:1 = "VLAN";
-                #             radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
-                #             # assign VLAN ID 145 to RADIUS attribute
-                #             radius.reply.attr.Tunnel-Private-Group-Id:1 = "145";
-                #         }
+                #         radius.reply.attr.Tunnel-Type:1 = "VLAN";
+                #         radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
+                #         # assign VLAN ID 145 to RADIUS attribute
+                #         radius.reply.attr.Tunnel-Private-Group-Id:1 = "145";
                 #    }
                 #}
 
@@ -218,29 +208,19 @@ aaa {
                    vars.sqltid == none;
                    vars.sqltid == "";
                 } then {
-                    modify {
-                        radius.reply.attr.Tunnel-Type:1 = vars.sqlttype;
-                        radius.reply.attr.Tunnel-Medium-Type:1 = vars.sqltmedium;
-                        radius.reply.attr.Tunnel-Private-Group-Id:1 = vars.sqltid;
-                    }
+                    radius.reply.attr.Tunnel-Type:1 = vars.sqlttype;
+                    radius.reply.attr.Tunnel-Medium-Type:1 = vars.sqltmedium;
+                    radius.reply.attr.Tunnel-Private-Group-Id:1 = vars.sqltid;
                 } else {
-                    # Optionally set fixed values if VLAN ID was not available
-                    modify {
-                        radius.reply.attr.Tunnel-Type:1 = "VLAN";
-                        radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
-                        radius.reply.attr.Tunnel-Private-Group-Id:1 = "909";
-                    }
+                    # Set fixed values if the user's row has an empty VLAN ID.
+                    # Users without a row are already rejected by GET_VLANS.
+                    radius.reply.attr.Tunnel-Type:1 = "VLAN";
+                    radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
+                    radius.reply.attr.Tunnel-Private-Group-Id:1 = "909";
                 }
-
-                # EXPLICITLY accept, if user's roles didn't match
-                # Use this if user should anyway be authenticated although they will not get assigned
-                # any VLAN attributes based on group
-                # Without this, authorization will reject everything by default, so user will get
-                # Access-Reject
-                #accept;
             }
 
-            @final-execute {
+            @final_execute {
                 invoke "LOG_AUTHENTICATION";
             }
         }
@@ -249,24 +229,25 @@ aaa {
         handler "PROXY_TO_EDUROAM" {
             # Match RADIUS authentication requests
             # from any realm except "example.com"
-            # as long as they are not coming from the EDUROAM_TLS*
+            # as long as they are not coming from the EDUROAM_TLR*
             # client definitions. This is to avoid loop where request
-            # coming from eduroam is proxied back to eduroam
+            # coming from eduroam is proxied back to eduroam. Add the
+            # eduroam TLR clients to 40_clients-radius.radconf.
             conditions none {
                 aaa.identity.realm == "example.com";
                 radius.client starts "EDUROAM_TLR";
             }
 
-            # Proxy both authentication and accounting
+            # Proxy authentication requests (accounting is handled locally by the ACCOUNTING policy)
             @execute {
                 backend {
                     name "RADSEC_PROXY_EXAMPLE";
-                    # timeout for whole authentication/accounting attempt
+                    # maximum time to wait for the backend reply
                     #timeout 15000;
                 }
             }
 
-            @final-execute {
+            @final_execute {
                 if all {
                     radius.request.code == radius.ACCOUNTING_REQUEST;
                 } then {
@@ -295,7 +276,7 @@ aaa {
             # Logging to both authentication and accounting logs as this handler
             # should never trigger. If it does it indicates there is a case
             # that should be handled properly with it's own handler.
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
                 invoke "LOG_AUTHENTICATION";
             }
@@ -320,7 +301,7 @@ aaa {
             }
 
             # log all accounting
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
             }
         }
@@ -343,7 +324,7 @@ aaa {
             # Logging to both authentication and accounting logs as this handler
             # should never trigger. If it does it indicates there is a case
             # that should be handled properly with it's own handler.
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
                 invoke "LOG_AUTHENTICATION";
             }
@@ -371,7 +352,7 @@ aaa {
                     reject;
                 }
             }
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
                 invoke "LOG_AUTHENTICATION";
             }

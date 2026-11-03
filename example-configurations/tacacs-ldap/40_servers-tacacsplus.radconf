@@ -1,8 +1,8 @@
-# Radiator Policy Server TACACS+ server configuration
+# Radiator Policy Server and Radiator Core TACACS+ server configuration
 
 # Configure TACACS+ server
 servers {
-    tacacs-plus "TACACS_PLUS" {
+    tacacs_plus "TACACS_PLUS" {
         # Listener configuration
         listen {
             # Transport protocol: tcp

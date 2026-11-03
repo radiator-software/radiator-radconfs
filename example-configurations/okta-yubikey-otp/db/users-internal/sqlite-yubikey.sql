@@ -15,6 +15,6 @@ CREATE TABLE yubikeys (
 );
 
 -- Replace the username, public_uid and aes_key with your Yubikey values
--- INSERT INTO yubikeys (username, public_uid, aes_key, usage_counter, session_counter) VALUES ('mikem@example.com','hfhgewuludff',X'9fafa61d1ccafd37a33d7a3703356cd5',0,0);
+-- INSERT INTO yubikeys (username, public_uid, aes_key, usage_counter, session_counter) VALUES ('mikem@example.com','vvccccbdefgh',X'9fafa61d1ccafd37a33d7a3703356cd5',0,0);
 
 COMMIT;

@@ -27,28 +27,28 @@ aaa {
                   vars.totp_enabled == "true";
                 } then {
                   must pap {
-                   # Uses all but last 6 characters for PAP password.
-                    range -6 0 exclusive;
+                    # Uses all but last 6 characters for PAP password.
+                    secret radius.request.password | substring(0, -6);
                   }
                   if any {
-                      cache.last_timestep[aaa.identity] != none;
+                      cache.last_timestep[radius.request.attr.user-name] != none;
                   } then {
-                      modify hmac-otp.timestep.last = cache.last_timestep[aaa.identity][0];
+                      hmac-otp.timestep.last = cache.last_timestep[radius.request.attr.user-name][0];
                   }
                   totp {
                     # One previous timestep is accepted (If not used), none from the future.
                     resync_window 1 0;
                     # Uses last 6 digits of password as TOTP code.
-                    range -6 0;
+                    secret radius.request.password | substring(-6);
                   }
-                  modify cache.last_timestep[aaa.identity] = hmac-otp.timestep.last;
+                  cache.last_timestep[radius.request.attr.user-name] = hmac-otp.timestep.last;
 
                 # If MFA is not enabled for user in backend, using only PAP.
                 } else {
                   must pap;
                 }
             }
-            @final-execute {
+            @final_execute {
                 invoke "LOG_AUTHENTICATION";
             }
         }

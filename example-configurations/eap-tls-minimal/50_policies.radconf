@@ -15,7 +15,7 @@ aaa {
 
             @execute {
                 must eap {
-                    eap-tls {
+                    eap_tls {
                         tls {
 
                             # EAP server private key
@@ -32,21 +32,21 @@ aaa {
                             #keylog_filename "<root>/captures/eap-tls.keylog";
                         } # end of tls block
 
-                        @post-authentication {
+                        @post_authentication {
                             # if there is a SubjectAltName email
                             if any {
                                 cert.subject_alt.email != none;
                             }
                             # copy the email to vars for logging
                             then {
-                                modify vars.certemail = cert.subject_alt.email;
+                                vars.certemail = cert.subject_alt.email;
                             }
                         }
                     }
                 }
             }
 
-            @final-execute {
+            @final_execute {
                 invoke "LOG_AUTHENTICATION";
             }
         }
@@ -64,7 +64,7 @@ aaa {
                 accept;
             }
 
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
             }
         }
@@ -84,7 +84,7 @@ aaa {
                     reject;
                 }
             }
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
                 invoke "LOG_AUTHENTICATION";
             }

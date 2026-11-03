@@ -1,0 +1,54 @@
+clients {
+    radius "ACCOUNTING_NAS" {
+        client "LOCALHOST" {
+            source { ip 127.0.0.1; }
+            secret "mysecret";
+        }
+    }
+}
+servers {
+    radius "ACCOUNTING_INGRESS" {
+        listen { protocol udp; ip 127.0.0.1; port 18181; }
+        clients "ACCOUNTING_NAS";
+        policy "ACCOUNTING_INGRESS";
+    }
+    radius "ACCOUNTING_COLLECTOR" {
+        listen { protocol udp; ip 127.0.0.1; port 18183; }
+        clients "ACCOUNTING_NAS";
+        policy "ACCOUNTING_COLLECTOR";
+    }
+    diameter "ACCOUNTING" {
+        local_node "LOCAL" {
+            identity "r10-accounting.example";
+            realm "example";
+            capabilities {
+                vendor_id 9048;
+                product_name "Radiator Server";
+                host_ip_address 127.0.0.1;
+                acct_application_id 1;
+                acct_application_id 3;
+            }
+            listener "TCP" {
+                compatibility_unprotected_tcp true;
+                listen { protocol tcp; ip 127.0.0.1; port 28681; }
+            }
+        }
+        peer "R4_ORIGIN" {
+            identity "r4-origin.example";
+            realm "example";
+            adjacency "TCP" { local_node "LOCAL"; direction incoming; accept_on "TCP"; }
+        }
+        peer "R4_COLLECTOR" {
+            identity "r4-collector.example";
+            realm "example";
+            adjacency "TCP" {
+                local_node "LOCAL";
+                direction outgoing;
+                compatibility_unprotected_tcp true;
+                connect { protocol tcp; host "127.0.0.1"; port 28682; }
+            }
+        }
+        peer_group "R4_COLLECTOR" { peer "R4_COLLECTOR"; selection ordered; }
+        policy "DIAMETER_ACCOUNTING";
+    }
+}

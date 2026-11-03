@@ -1,7 +1,7 @@
 # provision-mfa-secret.ps1
 #
 # Create a new client secret to Microsoft's Entra ID MFA Notification Client.
-# This secret has to be updated to the Radiator configuration file 50_policies.radconf
+# This secret has to be updated to the Radiator configuration file 25_pipeline-entra-credentials.radconf
 # so that Radiator is allowed to use the MFA notification service.
 #
 

@@ -8,6 +8,8 @@
       "description": "EAP server certificate (chain) file",
       "type": "file_upload",
       "file_type": "cert",
+      "private_key_id": "EAP_SERVER_KEY",
+      "private_key_password_id": "EAP_SERVER_KEY_PASSWORD",
       "path": "<root>/tls/certs",
       "filename_id": "EAP_SERVER_CERT_FILE",
       "placeholder": "EAP_SERVER_CERT",
@@ -27,7 +29,7 @@
     {
       "id": "EAP_SERVER_KEY_PASSWORD",
       "label": "EAP server private key password if any",
-      "description": "Password for RadSec server private key file in case the private key is password protected",
+      "description": "Password for EAP server private key file in case the private key is password protected",
       "type": "secret",
       "optional": true
     },
@@ -58,7 +60,7 @@
     {
       "id": "EAP_SERVER_CLIENT_CA_DIRECTORY_REFRESH_INTERVAL",
       "label": "EAP server client CA certificate directory refresh interval",
-      "description": "The interval in milliseconds for checking the contents of RadSec server client CA certificate directory for new CA certificates. 30 min = 30*60*1000 = 1 800 000 milliseconds.",
+      "description": "The interval in milliseconds for checking the contents of EAP server client CA certificate directory for new CA certificates. 30 min = 30*60*1000 = 1 800 000 milliseconds.",
       "type": "string",
       "placeholder": "1800000",
       "optional": true
@@ -68,7 +70,7 @@
 # radiator-config-template
 # Certificates configuration generated from template
 #
-# Each certificate/key is uploaded to tls/certs, tls/key or tls/ca and
+# Each certificate/key is uploaded to tls/certs, tls/keys or tls/ca and
 # configured here. CA directories are stored under tls/ca.
 
 certificates {
@@ -94,9 +96,9 @@ certificates {
   {{/if}}
 
   {{#if EAP_SERVER_CLIENT_CA_DIRECTORY_PATH}}
-  x509-directory "EAP_SERVER_CLIENT_CA_DIRECTORY" {
+  x509_directory "EAP_SERVER_CLIENT_CA_DIRECTORY" {
     directory "{{{EAP_SERVER_CLIENT_CA_DIRECTORY_PATH}}}";
-    # The interval in milliseconds for checking the contents of RadSec
+    # The interval in milliseconds for checking the contents of EAP
     # server client CA certificate directory for new CA certificates.
     # 30 min = 30*60*1000 = 1 800 000 milliseconds.
     #interval 1800000;

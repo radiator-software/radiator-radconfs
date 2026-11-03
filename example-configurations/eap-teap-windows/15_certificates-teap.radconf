@@ -17,10 +17,10 @@ certificates {
     filename "<root>/tls/ca/EAP_SERVER_CLIENT_CA.pem";
   }
 
-  x509-directory "EAP_TEAP_CLIENT_CA_DIRECTORY" {
+  x509_directory "EAP_TEAP_CLIENT_CA_DIRECTORY" {
     directory "<root>/tls/ca/EAP_SERVER_CLIENT_CA";
-    # The interval in milliseconds for checking the contents of RadSec
-    # server client CA certificate directory for new CA certificates.
+    # The interval in milliseconds for checking the contents of EAP-TEAP
+    # client CA certificate directory for new CA certificates.
     # 30 min = 30*60*1000 = 1 800 000 milliseconds.
     #interval 1800000;
     interval 1800000;

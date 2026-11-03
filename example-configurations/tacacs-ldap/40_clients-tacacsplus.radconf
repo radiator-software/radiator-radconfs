@@ -1,5 +1,5 @@
 clients {
-    tacacs-plus "CLIENTS_TACACS_PLUS" {
+    tacacs_plus "CLIENTS_TACACS_PLUS" {
         client "ALL_IP" {
             source {
                 ip 0.0.0.0/0;

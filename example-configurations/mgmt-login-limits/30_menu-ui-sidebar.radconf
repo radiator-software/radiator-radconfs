@@ -1,0 +1,15 @@
+# 30_menu-ui-sidebar.radconf
+#
+# Adds a Radiator UI sidebar shortcut to the management users file so that
+# the default password can be changed right after installation.
+#
+
+ui {
+    sidebar {
+        section "Management";
+        item "Management users" {
+            url "/configuration/files/details/?filename=management%2Fmanagement-users.json5&template-hint=management-users.json5.radtmpl";
+            icon "LockOpen";
+        }
+    }
+}

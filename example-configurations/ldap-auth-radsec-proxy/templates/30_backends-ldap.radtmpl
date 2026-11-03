@@ -68,6 +68,7 @@
           "description": "LDAP client's certificate",
           "type": "file_upload",
           "file_type": "cert",
+          "private_key_id": "LDAP_CLIENT_KEY_FILE",
           "path": "<root>/tls/certs",
           "filename_id": "LDAP_CLIENT_CERT_FILE",
           "placeholder": "LDAP_CLIENT_CERT",
@@ -128,7 +129,7 @@
           "label": "Search Filter",
           "description": "Conditions an entry in the directory must meet to be returned by the search",
           "type": "string",
-          "placeholder": "(&(objectClass=groupOfNames)(member=cn=%{aaa.identity},ou=people,dc=example,dc=com))\""
+          "placeholder": "(&(objectClass=groupOfNames)(member=cn=%{radius.request.attr.user-name},ou=people,dc=example,dc=com))"
         },
         {
           "id": "SINGLE_MAPPING",
@@ -187,7 +188,7 @@
           "label": "Search Filter",
           "description": "Conditions an entry in the directory must meet to be returned by the search",
           "type": "string",
-          "placeholder": "(&(objectClass=groupOfNames)(member=cn=%{aaa.identity},ou=people,dc=example,dc=com))\""
+          "placeholder": "(&(objectClass=groupOfNames)(member=cn=%{radius.request.attr.user-name},ou=people,dc=example,dc=com))"
         },
         {
           "id": "MULTI_MAPPING",
@@ -249,49 +250,48 @@ backends {
       }
       {{/if}}
     }
-  }
-  {{/each}}
 
-    {{#if SINGLE_SEARCH}}
     # LDAP operations
     # Operations can use e.g. aaa.identity or any set user defined variable as search string
+    {{#each @root.SINGLE_SEARCH}}
 
     search "{{{SINGLE_SEARCH_NAME}}}" {
       base "{{{SINGLE_SEARCH_BASE}}}";
-      scope "{{{SINGLE_SEARCH_SCOPE}}}";
+      scope {{{SINGLE_SEARCH_SCOPE}}};
       filter "{{{SINGLE_SEARCH_FILTER}}}";
 
       # Result value mapping
       mapping {
-        {{#with SINGLE_SEARCH.SINGLE_MAPPING}}
+        {{#each SINGLE_MAPPING}}
         {{{SINGLE_RESULT_VAR}}} = {{{SINGLE_RESULT}}};
-        {{/with}}
+        {{/each}}
       }
     }
-    {{/if}}
+    {{/each}}
+    {{#each @root.MULTI_SEARCH}}
 
-    {{#if MULTI_SEARCH}}
-    # LDAP operations
-    # Operations can use e.g. aaa.identity or any set user defined variable as search string
-
-    search "{{{MULTI_SEARCH.MULTI_SEARCH_NAME}}}" {
-      base "{{{MULTI_SEARCH.MULTI_SEARCH_BASE}}}";
-      scope "{{{MULTI_SEARCH.MULTI_SEARCH_SCOPE}}}";
-      filter "{{{MULTI_SEARCH.MULTI_SEARCH_FILTER}}}";
+    search "{{{MULTI_SEARCH_NAME}}}" {
+      base "{{{MULTI_SEARCH_BASE}}}";
+      scope {{{MULTI_SEARCH_SCOPE}}};
+      filter "{{{MULTI_SEARCH_FILTER}}}";
 
       # Result value mapping
       mapping {
-        {{#with MULTI_SEARCH.MULTI_MAPPING}}
+        {{#each MULTI_MAPPING}}
         {{{MULTI_RESULT_VAR}}} += {{{MULTI_RESULT}}};
-        {{/with}}
+        {{/each}}
       }
     }
-    {{/if}}
+    {{/each}}
+    {{#if @root.DYNAMIC_BIND}}
 
-    {{#if DYNAMIC_BIND}}
+    # The user's DN must be stored in vars.dn before the bind, for example
+    # with the mapping vars.dn = entry::dn; in a search
     bind "BIND_USER" {
       dn vars.dn;
       password radius.request.password;
     }
- {{/if}}
+    {{/if}}
+  }
+  {{/each}}
 }

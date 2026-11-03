@@ -1,0 +1,216 @@
+# 25_management-policy.radconf
+#
+# Radiator UI and management API authentication with failed login limits.
+#
+# Password logins are rejected for a while after too many failed attempts
+# for the same username or from the same source IP address. Requests that
+# use an existing Radiator UI session are not limited.
+#
+# Adjust the limits in the MGMT_LOGIN_LIMITS pipeline and the lockout
+# duration in the caches below. Set a limit to 0 to disable that lockout.
+#
+# Counters are kept in memory on each node. They are cleared when Radiator
+# Policy Server and Radiator Core restart, and each cluster node counts
+# failures independently.
+#
+
+aaa {
+    # Login limit settings. The PASSWORD_LOGIN handler invokes this pipeline
+    # before every password login.
+    @pipeline "MGMT_LOGIN_LIMITS" {
+        # Failed logins allowed per username before lockout
+        vars.login_limit_user_failures = "5";
+
+        # Failed logins allowed per source IP address before lockout.
+        # Keep this higher than the username limit when several
+        # administrators share a source address.
+        vars.login_limit_ip_failures = "20";
+    }
+}
+
+caches {
+    # Failed password logins per username. The timeout is the lockout
+    # duration. It starts at the first failure and is not extended by later
+    # failures, so the counter resets at most this long after it started.
+    cache "MGMT_LOGIN_FAILURES_USER" {
+        timeout 15m;
+    }
+
+    # Failed password logins per source IP address, with the same timeout
+    # behavior as the username counter.
+    cache "MGMT_LOGIN_FAILURES_IP" {
+        timeout 15m;
+    }
+}
+
+scripts {
+    # Counts the login attempt for the username and the source IP address,
+    # and sets vars.login_locked to "username" or "source_ip" when the
+    # attempt exceeds a limit. The password is not checked while a lockout
+    # is active, so guessing cannot continue.
+    #
+    # Every attempt is counted before the password check and undone after a
+    # successful login. Reading the counter first and counting only after a
+    # failed check would let parallel requests all pass the check before any
+    # failure is counted. The increment is atomic, so each parallel request
+    # gets its own count.
+    lua "MGMT_LOGIN_LIMIT_CHECK" {
+        content """
+            local context, previous = ...
+
+            local user_limit = tonumber(context.vars:get("login_limit_user_failures")) or 0
+            local ip_limit = tonumber(context.vars:get("login_limit_ip_failures")) or 0
+            local username = context.aaa.identity or ""
+            local source_ip = context.vars:get("login_source_ip") or ""
+
+            if ip_limit > 0 then
+                local ip_attempts = context.cache:increment("MGMT_LOGIN_FAILURES_IP", source_ip, 1)
+                if ip_attempts > ip_limit then
+                    context.vars:set("login_locked", "source_ip")
+                    return previous
+                end
+            end
+
+            if user_limit > 0 then
+                local user_attempts = context.cache:increment("MGMT_LOGIN_FAILURES_USER", username, 1)
+                if user_attempts > user_limit then
+                    -- A locked username must not use up the source IP limit
+                    -- shared by other administrators at the same address.
+                    if ip_limit > 0 then
+                        context.cache:increment("MGMT_LOGIN_FAILURES_IP", source_ip, -1)
+                    end
+
+                    context.vars:set("login_locked", "username")
+                    return previous
+                end
+            end
+
+            return previous
+        """;
+    }
+
+    # Undoes the attempt counted by MGMT_LOGIN_LIMIT_CHECK after a successful
+    # login, and clears the earlier failures of the username. Earlier failures
+    # from the source IP address are kept so that an attacker with one valid
+    # account cannot reset the limit while guessing passwords for other
+    # accounts.
+    lua "MGMT_LOGIN_SUCCESS_RECORD" {
+        content """
+            local context, previous = ...
+
+            local ip_limit = tonumber(context.vars:get("login_limit_ip_failures")) or 0
+            local username = context.aaa.identity or ""
+            local source_ip = context.vars:get("login_source_ip") or ""
+
+            context.cache:remove("MGMT_LOGIN_FAILURES_USER", username)
+
+            if ip_limit > 0 then
+                context.cache:increment("MGMT_LOGIN_FAILURES_IP", source_ip, -1)
+            end
+
+            return previous
+        """;
+    }
+}
+
+aaa {
+    policy "MANAGEMENT_POLICY" {
+        conditions all {
+            aaa.protocol == protocol.MANAGEMENT;
+        }
+
+        # Requests with username and password credentials, such as Radiator UI
+        # logins and management API calls that use HTTP Basic authentication.
+        handler "PASSWORD_LOGIN" {
+            conditions all {
+                http.authorization.password != none;
+            }
+
+            @execute {
+                # Sets the limits configured at the top of this file.
+                invoke "MGMT_LOGIN_LIMITS";
+
+                vars.login_source_ip = "%{http.client.ip}";
+
+                script "MGMT_LOGIN_LIMIT_CHECK";
+
+                if all {
+                    vars.login_locked == "source_ip";
+                } then {
+                    reject "Too many failed logins from source IP address";
+                }
+
+                if all {
+                    vars.login_locked == "username";
+                } then {
+                    reject "Too many failed logins for username";
+                }
+
+                until reject {
+                    http_management_authentication {
+                        # Loads the user. An unknown username rejects the login.
+                        @resolve {
+                            backend {
+                                name "MANAGEMENT_USERS";
+                                query "FIND_USER";
+                            }
+                        }
+
+                        # Compares the submitted password with the stored one.
+                        @verify {
+                            http_basic_auth;
+                        }
+                    }
+                } when accept {
+                    script "MGMT_LOGIN_SUCCESS_RECORD";
+                } else {
+                    # The failure was already counted by MGMT_LOGIN_LIMIT_CHECK.
+                    reject "Invalid username or password";
+                }
+            }
+
+            # Record every password login attempt so that lockouts and the
+            # attempts leading to them can be reviewed in the authentication log.
+            @final_execute {
+                log "AUTHENTICATION" {
+                    json {
+                        "User-Name" aaa.identity;
+                        "Source-IP" http.client.ip;
+                        "Result" "%{aaa.result}";
+                        "Reason" aaa.reason;
+                        "Method" http.method;
+                        "Path" http.path;
+                        "Code" http.status;
+                    }
+                }
+            }
+        }
+
+        # Requests that use an existing session, and requests without
+        # credentials, such as loading Radiator UI assets. Session requests
+        # reuse the user loaded at login for resolve_cache_timeout instead of
+        # querying the backend on every request.
+        handler "SESSION" {
+            conditions all {
+                http.authorization.password == none;
+            }
+
+            @execute {
+                http_management_authentication {
+                    @resolve {
+                        backend {
+                            name "MANAGEMENT_USERS";
+                            query "FIND_USER";
+                        }
+                    }
+
+                    # Session requests never run @verify, but the block
+                    # form requires it.
+                    @verify {
+                        http_basic_auth;
+                    }
+                }
+            }
+        }
+    }
+}

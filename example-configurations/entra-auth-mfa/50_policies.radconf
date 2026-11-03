@@ -2,7 +2,7 @@
 #
 # Radiator policy configuration
 #
-# Fill in the Microsoft Entra ID details to policy ENTRA_AUTHENTICATION
+# Fill in the Microsoft Entra ID details to 25_pipeline-entra-credentials.radconf
 #
 
 aaa {
@@ -29,7 +29,7 @@ aaa {
             }
 
             # log all accounting
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
             }
         }
@@ -49,7 +49,7 @@ aaa {
             #    aaa.identity.realm == "<realm>";
             #}
 
-            # The Directory ID, Application ID, Application secret and secret from the provisioning script are filled in with template pipeline in 25_template_entra.radconf
+            # The Directory ID, Application ID, Application secret and secret from the provisioning script are filled in with template pipeline in 25_pipeline-entra-credentials.radconf
             @execute {
                 invoke "SET_TENANT_INFORMATION";
 
@@ -94,16 +94,12 @@ aaa {
                 # Match user groups
                 #map user.group {
                 #    "Students" => {
-                #        modify {
-                #            radius.reply.attr.filter-id = "Students";
-                #        }
+                #        radius.reply.attr.filter-id = "Students";
                 #        reason "Matched group Students.";
                 #        accept;
                 #    }
                 #    "Staff" => {
-                #        modify {
-                #            radius.reply.attr.filter-id = "Staff";
-                #        }
+                #        radius.reply.attr.filter-id = "Staff";
                 #        reason "Matched group Staff.";
                 #        accept;
                 #    }
@@ -114,13 +110,13 @@ aaa {
                 #}
             }
 
-            @final-execute {
+            @final_execute {
                 invoke "LOG_AUTHENTICATION";
             }
         }
 
-        # DEFAULT handler rejects all authentication, accepts accounting
-        # This is needed especially if previous handler has realm condition active
+        # DEFAULT-AUTH handler rejects authentication requests that no earlier handler
+        # in this policy matched. This is needed especially if previous handler has realm condition active
         handler "DEFAULT-AUTH" {
             conditions any {
                 radius.request.code == any;
@@ -135,7 +131,7 @@ aaa {
                     reject;
                 }
             }
-            @final-execute {
+            @final_execute {
                 if all {
                     radius.request.code == radius.ACCOUNTING_REQUEST;
                 } then {
@@ -171,7 +167,7 @@ aaa {
             }
             # Logging to both authentication and accounting logs so it's noticed this
             # policy triggers
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
                 invoke "LOG_AUTHENTICATION";
             }

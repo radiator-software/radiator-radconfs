@@ -27,7 +27,7 @@ aaa {
             }
 
             # log all accounting
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
             }
         }
@@ -50,7 +50,7 @@ aaa {
 
             @execute {
                 must eap {
-                    eap-teap {
+                    eap_teap {
                         tls {
                             # EAP server private key
                             certificate_key "EAP_TEAP_KEY";
@@ -59,18 +59,18 @@ aaa {
                             certificate "EAP_TEAP_SERVER_CERT";
 
                             # Do not require client certificate verification for
-                            # outer EAP-TLS
+                            # the outer EAP-TEAP TLS tunnel
                             require_client_certificate false;
 
                             # CA certificate for verifying EAP-TLS
                             # client certificates
-                            #client_ca_certificate "EAP_TEAP_CLIENT_CERT";
+                            #client_ca_certificate "EAP_TEAP_CLIENT_CA";
 
                             # CA certificate directory for verifying
                             # client certificates with multiple CA certificates
                             client_ca_certificate "EAP_TEAP_CLIENT_CA_DIRECTORY";
 
-                            # Only TLSv1.2 is supported on outer EAP-TLS
+                            # Only TLSv1.2 is supported on the outer EAP-TEAP TLS tunnel
                             min_protocol_version tlsv12;
                             max_protocol_version tlsv12;
                         }
@@ -80,11 +80,11 @@ aaa {
                             # authentication. Make sure the Windows side primary and secondary
                             # client authentication EAP method matches the EAP method order here
                             # if machine and user authentication is using different EAP methods
-                            eap-teap-identity-type machine;
+                            eap_teap_identity_type machine;
 
                             # Try to authenticate machine with any of the following methods
                             eap {
-                                eap-tls {
+                                eap_tls {
                                     tls {
                                     # EAP server private key
                                     certificate_key "EAP_TEAP_KEY";
@@ -97,7 +97,7 @@ aaa {
 
                                     # CA certificate for verifying EAP-TLS
                                     # client certificates
-                                    #client_ca_certificate "EAP_TEAP_CLIENT_CERT";
+                                    #client_ca_certificate "EAP_TEAP_CLIENT_CA";
 
                                     # CA certificate directory for verifying
                                     # client certificates with multiple CA certificates
@@ -108,17 +108,17 @@ aaa {
 
                             # From chaining machine and user identity authentication
                             # If only machine or user authentication is done, these are not needed
-                            eap-teap-eap-identity-request;
+                            eap_teap_eap_identity_request;
                             # Set 60s timeout so user has time to type username and password
-                            eap-teap-intermediate-result 60s;
+                            eap_teap_intermediate_result 60s;
 
                             # Request EAP-TEAP user identity
-                            eap-teap-identity-type user;
+                            eap_teap_identity_type user;
 
                             # Authenticate username and password from backend
                             eap {
                                timeout 60s;
-                                eap-mschapv2 {
+                                eap_mschapv2 {
                                     @authentication {
                                         backend {
                                             name "JSONFILE_USERS_INTERNAL";
@@ -131,25 +131,23 @@ aaa {
                         }
 
                         # Log inner authentication requests
-                        @post-authentication {
+                        @post_authentication {
                             invoke "LOG_AUTHENTICATION";
                         }
                     }
                 }
 
                 # Add default VLAN attributes
-                modify {
-                    radius.reply.attr.Tunnel-Type:1 = "VLAN";
-                    # with FreeRADIUS dictionary
-                    #radius.reply.attr.Tunnel-Medium-Type:1 = "IEEE-802";
-                    # with Radiator dictionary
-                    radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
-                    # assign VLAN ID 145 to RADIUS attribute
-                    radius.reply.attr.Tunnel-Private-Group-Id:1 = "145";
-                }
+                radius.reply.attr.Tunnel-Type:1 = "VLAN";
+                # with FreeRADIUS dictionary
+                #radius.reply.attr.Tunnel-Medium-Type:1 = "IEEE-802";
+                # with Radiator dictionary
+                radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
+                # assign VLAN ID 145 to RADIUS attribute
+                radius.reply.attr.Tunnel-Private-Group-Id:1 = "145";
             }
 
-            @final-execute {
+            @final_execute {
                 invoke "LOG_AUTHENTICATION";
             }
         }
@@ -178,7 +176,7 @@ aaa {
                     reject;
                 }
             }
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
                 invoke "LOG_AUTHENTICATION";
             }

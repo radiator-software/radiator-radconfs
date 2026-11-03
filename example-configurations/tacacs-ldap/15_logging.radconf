@@ -1,8 +1,8 @@
 # 15_logging.radconf
 #
-# Default log configuration for Radiator application log, Radiator
-# authentication log and Radiator accounting log. Possible logging
-# destinations are syslog, in-memory and file.
+# Default log configuration for Radiator application log and Radiator
+# authentication, accounting and authorization logs. Possible logging
+# destinations are syslog, in-memory, file and console.
 #
 
 logging {
@@ -12,7 +12,7 @@ logging {
 
         # application log to syslog
         #syslog {
-        #   loglevel debug;
+        #   #loglevel debug;
         #   loglevel info;
         #   facility daemon;
         #   # optional syslog unix domain socket path
@@ -36,13 +36,13 @@ logging {
 
     } # application
 
-    # Radiator authentication and application logs
+    # Radiator authentication, accounting and authorization logs
     aaa {
 
         # Authentication logger
         logger "AUTHENTICATION" {
 
-            # application log to syslog
+            # authentication log to syslog
             #syslog {
             #   facility auth;
             #   #filename /var/run/syslog;

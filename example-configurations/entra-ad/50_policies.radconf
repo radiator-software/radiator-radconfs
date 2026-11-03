@@ -2,7 +2,7 @@
 #
 # Radiator policy configuration
 #
-# Fill in the Microsoft Entra ID details to 25_pipeline_entra_credentials.radconf template.
+# Fill in the Microsoft Entra ID details to 25_pipeline-entra-credentials.radconf.
 # configure also the group check with correct group name(s)
 
 aaa {
@@ -29,7 +29,7 @@ aaa {
             }
 
             # log all accounting
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
             }
         }
@@ -39,9 +39,7 @@ aaa {
     # policy for Microsoft Entra ID authentication
     policy "ENTRA_AUTHENTICATION" {
         conditions any {
-            radius.client starts "PAP";
-            radius.client == "LOCALHOST_IPV4";
-            radius.client == "LOCALHOST_IPV6";
+            radius.request.method == radius.METHOD_PAP;
         }
 
         handler "ENTRA_AUTHENTICATION" {
@@ -91,12 +89,12 @@ aaa {
                 # Match user groups
                 map user.group {
                     "Staff" => {
-                        modify radius.reply.attr.filter-id = "Staff";
+                        radius.reply.attr.filter-id = "Staff";
                         reason "Matched group Staff.";
                         accept;
                     }
                     "Students" => {
-                        modify radius.reply.attr.filter-id = "Students";
+                        radius.reply.attr.filter-id = "Students";
                         reason "Matched group Students.";
                         accept;
                     }
@@ -107,12 +105,13 @@ aaa {
                 }
             }
 
-            @final-execute {
+            @final_execute {
                 invoke "LOG_AUTHENTICATION";
             }
         }
 
-        # DEFAULT handler rejects all authentication, accepts accounting
+        # DEFAULT-AUTH handler rejects authentication requests that no earlier handler
+        # in this policy matched
         handler "DEFAULT-AUTH" {
             conditions any {
                 radius.request.code == any;
@@ -127,7 +126,7 @@ aaa {
                     reject;
                 }
             }
-            @final-execute {
+            @final_execute {
                 if all {
                     radius.request.code == radius.ACCOUNTING_REQUEST;
                 } then {
@@ -163,7 +162,7 @@ aaa {
             }
             # Logging to both authentication and accounting logs so it's noticed this
             # policy triggers
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
                 invoke "LOG_AUTHENTICATION";
             }

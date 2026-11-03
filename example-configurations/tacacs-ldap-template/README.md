@@ -1,6 +1,6 @@
-# TACACS+ with LDAP backend configuration for the Radiator 10
+# TACACS+ with LDAP backend configuration for Radiator Policy Server and Radiator Core
 
-All file/path references in this document assume that the Radiator 10
+All file/path references in this document assume that the Radiator Policy Server and Radiator Core
 package has been installed and this configuration is used as the
 default configuration.
 
@@ -36,7 +36,8 @@ Change LDAP configuration to match your database:
 ## TACACS+ authorization rules
 * defined in 50_policies-tacacsplus.radconf and 50_tacacs-authorization-rules.radconf
 * cache "groups" timeout 1800s defines authorization timeout after successful authentication
-* authorization block in handler "tacacs_authorization" is used to define TACACS+ authorization rules
+* handler "tacacs_authorization" invokes the pipeline "TACACSPLUS_RULES" defined in 50_tacacs-authorization-rules.radconf, which is edited with the template
+* the example has no rules, so all authorization requests are rejected until rules are added
 * map user.group matches against user's group data fetched from LDAP
 * incoming tacacsplus.request.args are matched against rules (comparison can be literal or regex)
 * other comparisons also possible, for example tacacsplus.client or tacacsplus.client.ip
@@ -46,10 +47,10 @@ Change LDAP configuration to match your database:
 
 
 ## Radiator UI
-This example has Radiator 10 GUI activated:
-  - Radiator UI is open to all IP addresses, protected by username and password and management certificates, configured in `/var/lib/radiator/management/`
+This example has Radiator UI activated:
+  - Radiator UI is available over HTTPS on all IPv4 addresses and protected by username and password, configured in `/var/lib/radiator/management/`
   - Use https://YOUR-IP-ADDRESS:8443/ to access
-  - Default username: _admin_ and password: _ChangeThisPassword!_
+  - Default username: `admin` and password: `ChangeThisPassword!`
 
 Example LDAP content
 
@@ -120,3 +121,7 @@ result: 0 Success
 # numResponses: 7
 # numEntries: 6
 ```
+
+## Compatibility
+
+For best results, use this example with the latest available release. Earlier releases may not support all functionality.

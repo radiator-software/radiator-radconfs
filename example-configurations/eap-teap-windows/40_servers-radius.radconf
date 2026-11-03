@@ -38,13 +38,13 @@ servers {
     }
 
     radius "RADSEC_TCP_2083" {
-        # capture the requests for this server
+        # capture received and sent messages for this server
         #capture "CAPTURE_TO_CONSOLE_AND_FILE";
         #capture "CAPTURE_TO_CONSOLE_AND_DIRECTORY";
         capture "CAPTURE_TO_FILE";
         listen {
             # RadSec = RADIUS over TLS
-            protocol tls;
+            protocol tcp;
 
             # RadSec standard port is 2083
             port 2083;
@@ -79,9 +79,9 @@ servers {
         # allow connections from clients in a client list "CLIENTS_RADSEC_ALL"
         clients "CLIENTS_RADSEC_ALL";
 
-        # Handle all requests by AAA policy named "EAP"
+        # Handle all requests by AAA policy named "AUTHENTICATION"
         # this server level policy overrides the policy conditions
-        #policy "EAP";
+        #policy "AUTHENTICATION";
 
     } # radius
 

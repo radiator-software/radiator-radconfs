@@ -105,7 +105,6 @@
   ]
 }
 # radiator-config-template
-# Template body (use {{VARIABLE_NAME}} for interpolation)
 clients {
   {{#each RADIUS}}
   radius "CLIENTS_RADIUS_ALL" {

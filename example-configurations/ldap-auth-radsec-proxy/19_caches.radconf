@@ -4,7 +4,7 @@
 
 caches {
     cache "groups" {
-        # default timeout 600 seconds
+        # Entries expire after 600 seconds (without timeout they never expire)
         timeout 600000;
     }
 }

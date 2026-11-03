@@ -1,0 +1,55 @@
+management {
+    http {
+        # Listener configuration
+        listen {
+            protocol tcp;
+            port 8443;
+            ip 0.0.0.0;
+            tls {
+                 # HTTP management server's certificate
+                 certificate "MANAGEMENT_API_CERT";
+
+                 # HTTP management server's private key
+                 certificate_key "MANAGEMENT_API_KEY";
+
+                 # Do not require client certificates = false
+                 require_client_certificate false;
+            }
+        }
+
+        # allow these clients to connect
+        clients "MANAGEMENT_ACCESS_ALLOW_LIST";
+
+        # use this policy to authorize Radiator UI users, including single sign-on users
+        policy "MANAGEMENT_POLICY";
+
+        # Single sign-on with Microsoft Entra ID. Register a web application in Entra,
+        # add the redirect URL below and create a client secret for it.
+        oidc "entra" {
+            title "Microsoft";
+            issuer "https://login.microsoftonline.com/TENANT_ID/v2.0";
+            client_id "APPLICATION_CLIENT_ID";
+            client_secret "APPLICATION_CLIENT_SECRET";
+            # The address users open Radiator UI with, followed by the callback path.
+            redirect_url "https://radiator.example.com:8443/api/v1/auth/oidc/entra/callback";
+            # The object ID of the user never changes. Users can change preferred_username,
+            # so it must not identify them.
+            identity_claim "oid";
+            # Signing out of Radiator UI also signs out of Microsoft, which then returns the
+            # browser to the Radiator UI login page. Register this URL as a redirect URL in
+            # Entra too, or use `logout_redirect true;` to stay on the Microsoft page.
+            logout_redirect "https://radiator.example.com:8443/ui/login";
+        }
+
+        # Single sign-on with Keycloak or another OpenID Connect provider.
+        oidc "keycloak" {
+            title "Keycloak";
+            issuer "https://keycloak.example.com/realms/radiator";
+            client_id "radiator-ui";
+            client_secret "KEYCLOAK_CLIENT_SECRET";
+            redirect_url "https://radiator.example.com:8443/api/v1/auth/oidc/keycloak/callback";
+            # The Keycloak user ID never changes.
+            identity_claim "sub";
+        }
+    }
+}

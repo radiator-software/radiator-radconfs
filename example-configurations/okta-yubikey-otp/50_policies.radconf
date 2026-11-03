@@ -8,7 +8,7 @@ aaa {
             @execute {
                 invoke "SET_TENANT_INFORMATION";
 
-                modify vars.password = "%{radius.request.password |reveal | substring(0, -44)}";
+                vars.password = "%{radius.request.password | substring(0, -44)}";
 
                 # Okta ROPC authentication with username and password
                 try {
@@ -45,12 +45,12 @@ aaa {
                 # Match user groups from Okta
                 map user.group {
                     "Staff" => {
-                        modify radius.reply.attr.filter-id = "Staff";
+                        radius.reply.attr.filter-id = "Staff";
                         reason "Matched group Staff.";
                         accept;
                     }
                     "Students" => {
-                        modify radius.reply.attr.filter-id = "Students";
+                        radius.reply.attr.filter-id = "Students";
                         reason "Matched group Students.";
                         accept;
                     }
@@ -60,7 +60,7 @@ aaa {
                     }
                 }
             }
-            @final-execute {
+            @final_execute {
                 invoke "LOG_AUTHENTICATION";
             }
         }

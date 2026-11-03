@@ -1,4 +1,4 @@
-# radiator-interpolated-config-template {"originalTemplate":{"filename":"40_clients-tacacsplus.radtmpl","checksum":"9b7cb983"},"items":[{"id":"TACACSPLUS","type":"group","instances":[{"CLIENTS":[{"CLIENT_IDENTIFIER":"ALL_IP","CLIENT_SECRET":"mysecret","IP":[{"IP_ADDRESS":"0.0.0.0/0"},{"IP_ADDRESS":"::/0"}]}]}]}]}
+# radiator-interpolated-config-template {"originalTemplate":{"filename":"40_clients-tacacsplus.radtmpl","checksum":"ee764395"},"items":[{"id":"TACACSPLUS","type":"group","instances":[{"CLIENTS":[{"CLIENT_IDENTIFIER":"ALL_IP","CLIENT_SECRET":"mysecret","IP":[{"IP_ADDRESS":"0.0.0.0/0"},{"IP_ADDRESS":"::/0"}]}]}]}]}
 # NOTE: This file has been automatically generated from a template file at 40_clients-tacacsplus.radtmpl.
 #
 # The file was generated with the following template values:
@@ -9,9 +9,8 @@
 # this configuration file by removing the radiator-interpolated-config-template comment
 # on the first line.
 
-# Template body (use  for interpolation)
 clients {
-  tacacs-plus "CLIENTS_TACACSPLUS_ALL" {
+  tacacs_plus "CLIENTS_TACACSPLUS_ALL" {
     client "ALL_IP" {
       source {
         ip 0.0.0.0/0;

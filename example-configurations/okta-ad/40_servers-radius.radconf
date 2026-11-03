@@ -19,7 +19,7 @@ servers {
             ip ::;
         }
 
-        # RADIUS client lists and pre-client cannot be used simultaneously
+        # Static RADIUS client list. Can be combined with @pre_client, which is checked first.
         clients "CLIENTS_RADIUS_ALL";
     }
 
@@ -35,7 +35,7 @@ servers {
             ip ::;
         }
 
-        # RADIUS client lists and pre-client cannot be used simultaneously
+        # Static RADIUS client list. Can be combined with @pre_client, which is checked first.
         clients "CLIENTS_RADIUS_ALL";
     }
 }

@@ -1,5 +1,5 @@
-# TOTP + PAP with SQLite backend example configuration for Radiator 10
-All file/path references in this document assume that the Radiator 10
+# TOTP + PAP with SQLite backend example configuration for Radiator Policy Server and Radiator Core
+All file/path references in this document assume that the Radiator Policy Server and Radiator Core
 package has been installed and this configuration is used as the
 default configuration.
 
@@ -12,7 +12,7 @@ default configuration.
 
 ## Clients
 In the Radiator configuration the RADIUS clients can be statically configured in `/var/lib/radiator/40_clients-radius.radconf` and used in `/var/lib/radiator/40_servers-radius.radconf`.
-Adding and modifying RADIUS clients can be done with templates in the GUI by selecting 'Local clients' from the menu.
+Adding and modifying RADIUS clients can be done with templates in Radiator UI by selecting 'Local clients' from the menu.
 
 ## Internal Users
 
@@ -23,12 +23,12 @@ Internal users (e.g. the users authenticated locally by server for Wi-Fi access)
 * To recreate the database, run: `sqlite3 db/users-internal/users-internal-totp.sqlite < db/users-internal/sqlite_users_internal_totp.sql`
 * Initial usernames, passwords and TOTP seeds in the file:
 
-|  Username | Password | TOTP Enabled | TOTP seed for authenticator |
-|---|---|---|---|
-| mikem | fred | Yes | 0000000000000000000000000000000000000000 |
-| batman | TheHeroGothamDeserves | Yes | A0B1C2D3E4F5A6B7C8D9E0F1A2B3C4D5E6F7A8B9 |
-| alfred | TheButlerDidIt | Yes | BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB |
-| robin | HolyPasswordBatman | Yes | 8806804dd18806804dd18806804dd18806804dd1 |
+|  Username | Password | TOTP Enabled | TOTP seed (hex, stored in the database) | TOTP seed for authenticator (base32) |
+|---|---|---|---|---|
+| mikem | fred | Yes | 0000000000000000000000000000000000000000 | AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA |
+| batman | TheHeroGothamDeserves | Yes | A0B1C2D3E4F5A6B7C8D9E0F1A2B3C4D5E6F7A8B9 | UCY4FU7E6WTLPSGZ4DY2FM6E2XTPPKFZ |
+| alfred | TheButlerDidIt | Yes | BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB | XO53XO53XO53XO53XO53XO53XO53XO53 |
+| robin | HolyPasswordBatman | Yes | 8806804dd18806804dd18806804dd18806804dd1 | RADIATORRADIATORRADIATORRADIATOR |
 
 ## Database Management
 
@@ -65,7 +65,11 @@ This configuration implements TOTP replay protection by tracking the last used t
 **Note:** Replay protection only applies when `totp_enabled = 1`. Users with TOTP disabled are authenticated with PAP only.
 
 ## Radiator UI
-This example has Radiator 10 GUI activated:
- * Radiator UI is open to all IP addresses, protected by username and password and management certificates, configured in `/var/lib/radiator/management/`
+This example has Radiator UI activated:
+ * Radiator UI is available over HTTPS on all IPv4 addresses and protected by username and password, configured in `/var/lib/radiator/management/`
  * Use https://YOUR-IP-ADDRESS:8443/ to access
- * Default username: _admin_ and password: _ChangeThisPassword!_
+ * Default username: `admin` and password: `ChangeThisPassword!`
+
+## Compatibility
+
+For best results, use this example with the latest available release. Earlier releases may not support all functionality.

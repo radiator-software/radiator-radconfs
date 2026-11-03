@@ -1,0 +1,21 @@
+# Certificate revocation list (CRL) for EAP client certificates
+#
+# The EAP-TLS configuration in 50_policies.radconf uses this CRL to
+# reject client certificates that the client CA has revoked. The demo
+# CRL lists the certs/revoked-I2-* certificates.
+#
+# A single CRL file is read again only when the configuration is
+# reloaded. To refresh CRLs automatically, use a crl_directory block
+# with an interval instead.
+#
+# A CRL is valid until its next update time, set by the CA. After that
+# time the CRL is stale, and Radiator rejects every client certificate
+# checked against it, also certificates that are not revoked, until a
+# newer CRL is loaded. Set allow_stale yes; to accept clients while the
+# CRL is stale. Revoked certificates are still rejected.
+
+certificates {
+  crl "EAP_SERVER_CLIENT_CRL" {
+    filename "<root>/tls/ca/intermediate-CA-I2-crl.pem";
+  }
+}

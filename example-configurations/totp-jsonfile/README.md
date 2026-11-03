@@ -1,5 +1,5 @@
-# TOTP + PAP with jsonfile backend example configuration for Radiator 10
-All file/path references in this document assume that the Radiator 10
+# TOTP + PAP with jsonfile backend example configuration for Radiator Policy Server and Radiator Core
+All file/path references in this document assume that the Radiator Policy Server and Radiator Core
 package has been installed and this configuration is used as the
 default configuration.
 
@@ -10,11 +10,11 @@ default configuration.
 
 ## Clients
 In the Radiator configuration the RADIUS clients can be statically configured in `/var/lib/radiator/40_clients-radius.radconf` and used in `/var/lib/radiator/40_servers-radius.radconf`.
-Adding and modifying RADIUS clients can be done with templates in the GUI by selecting 'Local clients' from the menu.
+Adding and modifying RADIUS clients can be done with templates in Radiator UI by selecting 'Local clients' from the menu.
 
 ## Internal Users
 
-Internal users (e.g. the users authenticated locally by server for Wi-Fi access) are also managed by a radconf template (`users-internal.json5.radtmpl`):
+Internal users (e.g. the users authenticated locally by server for Wi-Fi access) are also managed by a radconf template (`users-internal-totp.json5.radtmpl`):
 
 * The users must be managed via user interface with the provided template; manual edits of JSON5 may cause problems with the UI integration
 * The users are stored in a custom JSON5 file at `db/users-internal/users-internal-totp.json5`
@@ -22,16 +22,20 @@ Internal users (e.g. the users authenticated locally by server for Wi-Fi access)
 
 |  Username | Password | TOTP seed for authenticator |
 |---|---|---|
-| mikem | fred | AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA |
+| mikem | fred | AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA |
 | batman | TheHeroGothamDeserves | UCY4FU7E6WTLPSGZ4DY2FM6E2XTPPKFZ |
 | alfred | TheButlerDidIt | XO53XO53XO53XO53XO53XO53XO53XO53 |
-| robin | HolyPasswordBatman | RADIATORRADIATORRADIATORRADIATORRADIATORRADIATOR |
+| robin | HolyPasswordBatman | RADIATORRADIATORRADIATORRADIATOR |
 
 
 
 
 ## Radiator UI
-This example has Radiator 10 GUI activated:
- * Radiator UI is open to all IP addresses, protected by username and password and management certificates, configured in `/var/lib/radiator/management/`
+This example has Radiator UI activated:
+ * Radiator UI is available over HTTPS on all IPv4 addresses and protected by username and password, configured in `/var/lib/radiator/management/`
  * Use https://YOUR-IP-ADDRESS:8443/ to access
- * Default username: _admin_ and password: _ChangeThisPassword!_
+ * Default username: `admin` and password: `ChangeThisPassword!`
+
+## Compatibility
+
+For best results, use this example with the latest available release. Earlier releases may not support all functionality.

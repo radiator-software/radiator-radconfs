@@ -1,4 +1,4 @@
-# 30_backends-okta.radconf
+# 30_backends.radconf
 #
 # Radiator backends configuration for Okta and Yubikey Offline validation
 #
@@ -9,12 +9,12 @@ backends {
         url "%{vars.aaa.oauth2.okta-domain}";
 
         authentication oauth2 {
-            token-url "%{vars.aaa.oauth2.issuer-uri}";
+            token_url "%{vars.aaa.oauth2.issuer-uri}";
             client "%{vars.aaa.oauth2.client}";
             secret "%{vars.aaa.oauth2.secret}";
             scope "openid profile groups";
             username "%{radius.request.attr.user-name}";
-            password "%{vars.password |reveal}";
+            password "%{vars.password}";
         }
 
         timeout 30000;

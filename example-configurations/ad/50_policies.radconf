@@ -23,7 +23,7 @@ aaa {
                 reason "reject_invalid_usernames: Username contains invalid characters.";
                 reject;
             }
-            @final-execute {
+            @final_execute {
                 invoke "LOG_AUTHENTICATION";
             }
         }
@@ -38,7 +38,7 @@ aaa {
                 reason "reject_invalid_realms: No realm or realm contains invalid characters.";
                 reject;
             }
-            @final-execute {
+            @final_execute {
                 invoke "LOG_AUTHENTICATION";
             }
         }
@@ -47,7 +47,8 @@ aaa {
         # No conditions, so this handler matches all the other authentication requests
         handler "AD_AUTHENTICATION" {
             @execute {
-                # Optionally strip realm from parameter if parameter used when searching LDAP is without realm in LDAP
+                # Optionally strip realm from aaa.identity when the LDAP entries are without realm.
+                # Change the FIND_USER filter in 30_backends.radconf to use %{aaa.identity} too.
                 #rewrite aaa.identity /^([^@]+).*/ "$1";
 
                 # Search user to get the user DN
@@ -71,20 +72,16 @@ aaa {
                 ## Set VLAN attributes based on user's groups
                 #map vars.groups {
                 #    "guest_group" => {
-                #        modify {
-                #            radius.reply.attr.Tunnel-Type:1 = "VLAN";
-                #            radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
-                #            # assign VLAN ID 125 to RADIUS attribute
-                #            radius.reply.attr.Tunnel-Private-Group-Id:1 = "125";
-                #        }
+                #        radius.reply.attr.Tunnel-Type:1 = "VLAN";
+                #        radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
+                #        # assign VLAN ID 125 to RADIUS attribute
+                #        radius.reply.attr.Tunnel-Private-Group-Id:1 = "125";
                 #    }
                 #    "admins_group" => {
-                #        modify {
-                #            radius.reply.attr.Tunnel-Type:1 = "VLAN";
-                #            radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
-                #            # assign VLAN ID 145 to RADIUS attribute
-                #            radius.reply.attr.Tunnel-Private-Group-Id:1 = "145";
-                #        }
+                #        radius.reply.attr.Tunnel-Type:1 = "VLAN";
+                #        radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
+                #        # assign VLAN ID 145 to RADIUS attribute
+                #        radius.reply.attr.Tunnel-Private-Group-Id:1 = "145";
                 #    }
                 #    any => {
                 #        reason "No groups matched";
@@ -93,7 +90,7 @@ aaa {
                 #}
             }
 
-            @final-execute {
+            @final_execute {
                 invoke "LOG_AUTHENTICATION";
             }
         }
@@ -118,7 +115,7 @@ aaa {
             }
 
             # log all accounting
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
             }
         }
@@ -145,7 +142,7 @@ aaa {
                     reject;
                 }
             }
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
                 invoke "LOG_AUTHENTICATION";
             }

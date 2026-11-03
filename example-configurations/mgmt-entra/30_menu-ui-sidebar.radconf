@@ -11,9 +11,5 @@ ui {
             url "/configuration/files/details/?filename=management%2F25_pipeline-entra-credentials.radconf";
             icon "Assignment";
         }
-        item "Local clients" {
-            url "/configuration/files/details/?filename=40_clients-radius.radconf";
-            icon "Router";
-        }
     }
 }

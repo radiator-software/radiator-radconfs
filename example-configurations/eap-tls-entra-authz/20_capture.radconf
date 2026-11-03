@@ -1,7 +1,8 @@
 # 20_capture.radconf
 #
-# Capture allows dumping received and sent Radius
-# messages to console (stdout) or file (pcap format)
+# Capture allows dumping received and sent RADIUS
+# messages to the application log outputs (console)
+# or to files (PcapNG format)
 #
 # Capture can be enabled, for example, within:
 #

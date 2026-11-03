@@ -7,7 +7,7 @@ aaa {
 
     # LOG_AUTHENTICATION pipeline for authentication logging
     @pipeline "LOG_AUTHENTICATION" {
-        # log using AUTHLOG logging handler
+        # log using the AUTHENTICATION logger
         log "AUTHENTICATION" {
             json {
                 "AAA-Identity" aaa.identity;
@@ -39,7 +39,7 @@ aaa {
                 "Service-Type" radius.request.attr.Service-Type;
                 "Timestamp" datetime.timestamp;
                 "Tunnel-Medium-Type-Reply" radius.reply.attr.Tunnel-Medium-Type;
-                "Tunnel-Medium-Type-Request" radius.request.attr.Tunnel-Medium.Type;
+                "Tunnel-Medium-Type-Request" radius.request.attr.Tunnel-Medium-Type;
                 "Tunnel-Private-Group-ID-Reply" radius.reply.attr.Tunnel-Private-Group-ID;
                 "Tunnel-Private-Group-ID-Request" radius.request.attr.Tunnel-Private-Group-ID;
                 "Tunnel-Type-Reply" radius.reply.attr.Tunnel-Type;
@@ -51,7 +51,7 @@ aaa {
 
     # LOG_ACCOUNTING pipeline for accounting logging
     @pipeline "LOG_ACCOUNTING" {
-        # log using ACCTLOG logging handler
+        # log using the ACCOUNTING logger
         log "ACCOUNTING" {
             json {
                 "Acct-Input-Gigawords" radius.request.attr.Acct-Input-Gigawords;

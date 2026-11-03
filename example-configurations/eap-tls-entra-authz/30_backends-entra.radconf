@@ -1,11 +1,13 @@
 # 30_backends-entra.radconf
 #
-# Radiator backends configuration for Microsoft Entra ID authentication and authorization
+# Radiator backends configuration for Microsoft Entra ID. This example uses
+# MS_CLIENT_CREDENTIALS for authorization; MS_RESOURCE_OWNER_PASSWORD_CREDENTIALS
+# is only needed for password authentication.
 #
-# Fill in the Entra ID details here to token-url, client and secret fields.
+# Fill in the Entra ID details here to token_url, client and secret fields.
 # The PDF instructions have more information where to find these.
 #
-# token url "https://login.microsoftonline.com/<Directory (tenant) ID>/oauth2/v2.0/token";
+# token_url "https://login.microsoftonline.com/<Directory (tenant) ID>/oauth2/v2.0/token";
 # client "<Application (client) ID>";
 # secret "<Application secret>";
 #
@@ -16,7 +18,7 @@ backends {
         url "https://graph.microsoft.com/";
 
         authentication oauth2 {
-            token-url "https://login.microsoftonline.com/<Directory (tenant) ID>/oauth2/v2.0/token";
+            token_url "https://login.microsoftonline.com/<Directory (tenant) ID>/oauth2/v2.0/token";
             client "<Application (client) ID>";
             secret "<Application secret>";
             scope "user.read groupmember.read.all openid profile";
@@ -50,7 +52,7 @@ backends {
         url "https://graph.microsoft.com/";
 
         authentication oauth2 {
-            token-url "https://login.microsoftonline.com/<Directory (tenant) ID>/oauth2/v2.0/token";
+            token_url "https://login.microsoftonline.com/<Directory (tenant) ID>/oauth2/v2.0/token";
             client "<Application (client) ID>";
             secret "<Application secret>";
             # Entra ID client credentials flow scope is always this

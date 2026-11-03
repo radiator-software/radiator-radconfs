@@ -8,7 +8,7 @@ servers {
 
     # one protocol+port per server supported
     radius "RADIUS_UDP_1812" {
-        # capture the requests for this server
+        # capture received and sent messages for this server
         capture "CAPTURE_TO_CONSOLE_AND_FILE";
         listen {
             protocol udp;
@@ -22,7 +22,7 @@ servers {
     }
 
     radius "RADIUS_UDP_1813" {
-        # capture the requests for this server
+        # capture received and sent messages for this server
         #capture "CAPTURE_TO_CONSOLE_AND_FILE";
         listen {
             protocol udp;

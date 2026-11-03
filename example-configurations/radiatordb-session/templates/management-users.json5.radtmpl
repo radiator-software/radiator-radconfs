@@ -1,0 +1,87 @@
+# radiator-config-template
+{
+  "description": "A JSON file backend for storing management user credentials. These credentials are used to log into the management interface.",
+  "items": [
+    {
+      "id": "ADMINISTRATORS",
+      "label": "Administrators",
+      "description": "List of administrator users",
+      "type": "group",
+      "min": 0,
+      "layout": "form",
+      "items": [
+        {
+          "id": "USERNAME",
+          "label": "Administrator username",
+          "description": "The username for the administrator account",
+          "type": "string",
+          "placeholder": "admin"
+        },
+        {
+          "id": "PASSWORD",
+          "label": "Password",
+          "description": "The administrator's password",
+          "type": "password"
+        },
+        {
+          "id": "PRIVILEGE",
+          "label": "Privilege level",
+          "type": "enum",
+          "options": [
+            {
+              "value": "all",
+              "label": "All"
+            },
+            {
+              "value": "write",
+              "label": "Write"
+            },
+            {
+              "value": "read",
+              "label": "Read"
+            },
+            {
+              "value": "monitor",
+              "label": "Monitor"
+            }
+          ]
+        },
+        {
+          "id": "DB_ROLES",
+          "label": "RadiatorDB roles",
+          "description": "Role names must match collection role names",
+          "type": "group",
+          "min": 0,
+          "layout": "table",
+          "items": [
+            {
+              "id": "ROLE",
+              "label": "Role name",
+              "description": "Role name that matches the collection roles",
+              "type": "string",
+              "placeholder": "collection-role"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+# radiator-config-template
+{
+  "users": [
+    {{#each ADMINISTRATORS}}
+    {
+      "username": "{{{USERNAME}}}",
+      "password": "{{{PASSWORD}}}",
+      "privilege": "{{{PRIVILEGE}}}",
+      "roles": [
+        {{#each DB_ROLES}}
+        "{{{ROLE}}}"{{#unless @last}},{{/unless}}
+        {{/each}}
+      ]
+    }{{#unless @last}},{{/unless}}
+    {{/each}}
+  ]
+}
+

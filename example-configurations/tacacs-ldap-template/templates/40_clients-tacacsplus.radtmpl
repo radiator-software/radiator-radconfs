@@ -46,10 +46,9 @@
   ]
 }
 # radiator-config-template
-# Template body (use {{VARIABLE_NAME}} for interpolation)
 clients {
   {{#each TACACSPLUS}}
-  tacacs-plus "CLIENTS_TACACSPLUS_ALL" {
+  tacacs_plus "CLIENTS_TACACSPLUS_ALL" {
     {{#each CLIENTS}}
     client "{{{CLIENT_IDENTIFIER}}}" {
       source {

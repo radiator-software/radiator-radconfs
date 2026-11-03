@@ -1,0 +1,135 @@
+# Example Radiator policy configuration for TACACS+ AAA with Microsoft Entra ID
+
+# Store TACACS+ group details between requests so command authorization can
+# use the groups fetched during successful authentication.
+caches {
+    cache "groups" {
+        timeout 1800s;
+    }
+}
+
+
+aaa {
+    policy "POLICY_TACACS_PLUS" {
+        handler "tacacs_authentication" {
+            conditions all {
+                tacacsplus.authentication == true;
+            }
+
+            @execute {
+                if any {
+                    tacacsplus.request.user == none;
+                    tacacsplus.request.user == "";
+                } then {
+                    tacacsplus.reply.status = "get-user";
+                    tacacsplus.reply.noecho = false;
+                    challenge "Username";
+
+                    if any {
+                        tacacsplus.request.user == none;
+                        tacacsplus.request.user == "";
+                    } then {
+                        reject "Username is required";
+                    }
+                }
+
+                if all {
+                    tacacsplus.request.password == none;
+                } then {
+                    tacacsplus.reply.status = "get-pass";
+                    tacacsplus.reply.noecho = true;
+                    challenge "Password";
+                }
+
+                invoke "SET_TENANT_INFORMATION";
+
+                # The OAuth2 token request validates the username and password.
+                backend {
+                    name "MS_RESOURCE_OWNER_PASSWORD_CREDENTIALS";
+                    query "AUTH_USERS";
+                }
+
+                if all {
+                    vars.account_enabled == true;
+                } then {
+                    accept;
+                } else {
+                    reject "The Microsoft Entra ID account is disabled";
+                }
+
+                backend {
+                    name "ENTRA_MFA";
+                    query "MFA_CHALLENGE";
+                }
+
+                map vars.challenge_result_value {
+                    "Success" => { accept; }
+                    any => {
+                        reject "%{vars.challenge_result_message}";
+                    }
+                }
+
+                backend {
+                    name "MS_RESOURCE_OWNER_PASSWORD_CREDENTIALS";
+                    query "GET_GROUPS";
+                }
+
+                cache.groups[tacacsplus.request.user] = user.group[*];
+                tacacsplus.reply.message = "Access granted";
+            }
+
+            @final_execute {
+                invoke "LOG_AUTHENTICATION";
+            }
+        }
+
+        handler "tacacs_authorization" {
+            conditions all {
+                tacacsplus.authorization == true;
+            }
+
+            @execute {
+                if any {
+                    cache.groups[tacacsplus.request.user] != none;
+                } then {
+                    user.group = cache.groups[tacacsplus.request.user][*];
+                    tacacsplus.reply.message = "Authorization groups: %{user.group}";
+                } else {
+                    reject "Authentication session has expired";
+                }
+
+                invoke "TACACSPLUS_RULES";
+            }
+
+            @final_execute {
+                invoke "LOG_AUTHORIZATION";
+            }
+        }
+
+        handler "tacacs_accounting" {
+            conditions all {
+                tacacsplus.accounting == true;
+            }
+
+            @execute {
+                accept;
+            }
+
+            @final_execute {
+                invoke "LOG_ACCOUNTING";
+            }
+        }
+        # Last handler of the policy, a catch-all handler
+        # even if there are logical gaps in the policy, no request goes
+        # to the end of the handler without a result.
+
+        handler "DEFAULT" {
+            conditions any {
+                aaa.type == any;
+            }
+            @execute {
+                reject;
+            }
+        }
+    }
+}

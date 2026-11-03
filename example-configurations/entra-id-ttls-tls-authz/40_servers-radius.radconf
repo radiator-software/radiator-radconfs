@@ -19,7 +19,7 @@ servers {
             ip ::;
         }
 
-        # RADIUS client lists and pre-client cannot be used simultaneously
+        # Static RADIUS client list. Can be combined with @pre_client, which is checked first.
         clients "CLIENTS_RADIUS_ALL";
     }
 
@@ -35,17 +35,17 @@ servers {
             ip ::;
         }
 
-        # RADIUS client lists and pre-client cannot be used simultaneously
+        # Static RADIUS client list. Can be combined with @pre_client, which is checked first.
         clients "CLIENTS_RADIUS_ALL";
     }
 
     radius "RADSEC_TCP_2083" {
-        # capture the requests for this server
+        # capture received and sent messages for this server
         #capture "CAPTURE_TO_CONSOLE_AND_FILE";
         #capture "CAPTURE_TO_CONSOLE_AND_DIRECTORY";
         listen {
             # RadSec = RADIUS over TLS
-            protocol tls;
+            protocol tcp;
 
             # RadSec standard port is 2083
             port 2083;
@@ -82,9 +82,9 @@ servers {
         # allow connections from clients in a client list "CLIENTS_RADSEC_ALL"
         clients "CLIENTS_RADSEC_ALL";
 
-        # Handle all requests by AAA policy named "EAP"
+        # Handle all requests by AAA policy named "ENTRA_ID"
         # this server level policy overrides the policy conditions
-        #policy "EAP";
+        #policy "ENTRA_ID";
 
     } # radius
 

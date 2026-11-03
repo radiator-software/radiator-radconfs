@@ -13,7 +13,7 @@
      grant all privileges on fixedline.* to 'radiator'@'localhost';
      exit
 
-   Then create and intialise the tables with this command:
+   Then create and initialise the tables with this command:
      mysql -Dfixedline -uradiator -ppassword < fixed-line-mysql.sql
 */
 
@@ -23,7 +23,7 @@ use fixedline;
 DROP TABLE IF EXISTS users;
 
 /* The exact names of the columns and this table can be changed with
-   Radiator config file, but the values given here match the defaults.
+   Radiator config file, but the values given here match the queries in 30_backends.radconf.
 */
 CREATE TABLE IF NOT EXISTS users (
         /* User id is also returned with Access-Accept */

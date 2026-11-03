@@ -1,38 +1,46 @@
 aaa {
     policy "MANAGEMENT_POLICY" {
         conditions all {
-            http.management == true;
+            aaa.protocol == protocol.MANAGEMENT;
         }
 
         handler "AUTHENTICATION" {
             @execute {
-                until reject ignore {
-                    try backend {
-                        name "MGMT_LDAP";
-                        query "FIND_USER";
-                    }
+                http_management_authentication {
+                    @resolve {
+                        until reject ignore {
+                            try backend {
+                                name "MGMT_LDAP";
+                                query "FIND_USER";
+                            }
 
-                    if any {
-                        vars.member_of == "CN=radiator-admins,OU=groups,DC=example,DC=org";
-                    } then {
-                        modify { user.privilege = "all"; }
-                    } else {
-                        modify { user.privilege = "monitor"; }
-                    }
-                } when accept {
-                    until accept {
-                        http-management-authentication;
-                        backend {
-                            name "MGMT_LDAP";
-                            query "BIND_USER";
+                            if any {
+                                vars.member_of == "CN=radiator-admins,OU=groups,DC=example,DC=org";
+                            } then {
+                                user.privilege = "all";
+                            } else {
+                                user.privilege = "monitor";
+                            }
+                        } when accept {
+                            accept;
+                        } else {
+                            backend {
+                                name "MANAGEMENT_USERS";
+                                query "FIND_USER";
+                            }
                         }
                     }
-                } else {
-                    backend {
-                        name "MANAGEMENT_USERS";
-                        query "FIND_USER";
+
+                    @verify {
+                        if any { vars.dn != none; } then {
+                            backend {
+                                name "MGMT_LDAP";
+                                query "BIND_USER";
+                            }
+                        } else {
+                            http_basic_auth;
+                        }
                     }
-                    http-management-authentication;
                 }
             }
         }

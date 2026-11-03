@@ -5,16 +5,18 @@
 # This configuration does two types of RADIUS Access-Request processing:
 #
 # 1. Requests from one client get a number of attributes added to
-# Access-Reply message based on the DSLForum-Circuit-Id and
-# DSLForum-Agent-Remote-Id values in the Access-Request. If the values
-# are not present in the SQL DB for the Radius client, the request is
-# rejected.
+# Access-Reply message based on the NAS-Identifier,
+# DSLForum-Agent-Remote-Id and DSLForum-Agent-Circuit-Id values in the
+# Access-Request. If the values are not present in the SQL DB, the
+# request is rejected.
 #
 # 2. This case is similar to the case 1., with the additional
 # requirement that the User-Name and User-Password attributes must be
 # correct.
 #
-# The selection of case 1. or 2. is done based on the Radius client.
+# The selection of case 1. or 2. is done based on the RADIUS client
+# identifier. The clients ALC-BNG-1 and ALC-BNG-2-PAP are not included in
+# 40_clients-radius.radconf and must be added there.
 
 aaa {
 
@@ -34,11 +36,9 @@ aaa {
                         name "AUTHBY-SQL-SUBSCRIBERS";
                         query "FIND_ALC_LINE_PARAMS";
                     }
-                    modify {
-                        radius.reply.attr.Alc-Subsc-ID-Str = vars.alc_id;
-                        radius.reply.attr.Alc-SLA-Prof-Str = vars.alc_sla;
-                        radius.reply.attr.Alc-Subsc-Prof-Str = vars.alc_prof;
-                    }
+                    radius.reply.attr.Alc-Subsc-ID-Str = vars.alc_id;
+                    radius.reply.attr.Alc-SLA-Prof-Str = vars.alc_sla;
+                    radius.reply.attr.Alc-Subsc-Prof-Str = vars.alc_prof;
                } else if all {
                    radius.request.code == radius.ACCOUNTING_REQUEST;
                } then {
@@ -51,7 +51,7 @@ aaa {
 
             # log authentication and accounting requests
             # Unknown requests are logged to authentication log
-            @final-execute {
+            @final_execute {
                 if all {
                     radius.request.code == radius.ACCOUNTING_REQUEST;
                 } then {
@@ -94,11 +94,9 @@ aaa {
                        reject;
                    }
 
-                   modify {
-                       radius.reply.attr.Alc-Subsc-ID-Str = vars.alc_id;
-                       radius.reply.attr.Alc-SLA-Prof-Str = vars.alc_sla;
-                       radius.reply.attr.Alc-Subsc-Prof-Str = vars.alc_prof;
-                   }
+                   radius.reply.attr.Alc-Subsc-ID-Str = vars.alc_id;
+                   radius.reply.attr.Alc-SLA-Prof-Str = vars.alc_sla;
+                   radius.reply.attr.Alc-Subsc-Prof-Str = vars.alc_prof;
                } else if all {
                    radius.request.code == radius.ACCOUNTING_REQUEST;
                } then {
@@ -109,7 +107,7 @@ aaa {
                }
             }
 
-            @final-execute {
+            @final_execute {
                 if all {
                     radius.request.code == radius.ACCOUNTING_REQUEST;
                 } then {
@@ -143,7 +141,7 @@ aaa {
                     reject;
                 }
             }
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
                 invoke "LOG_AUTHENTICATION";
             }

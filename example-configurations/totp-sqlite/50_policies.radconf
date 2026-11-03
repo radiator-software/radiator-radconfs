@@ -18,15 +18,15 @@ aaa {
 
                 } then {
                   must pap {
-                   # Uses all but last 6 characters for PAP password.
-                    range -6 0 exclusive;
+                    # Uses all but last 6 characters for PAP password.
+                    secret radius.request.password | substring(0, -6);
                   }
 
                   totp {
                     # One previous timestep is accepted (If not used), none from the future.
                     resync_window 1 0;
                     # Uses last 6 digits of password as TOTP code.
-                    range -6 0;
+                    secret radius.request.password | substring(-6);
                   }
 
                   # Update the last used timestep to prevent replay attacks
@@ -42,7 +42,7 @@ aaa {
                 }
             }
 
-            @final-execute {
+            @final_execute {
                 invoke "LOG_AUTHENTICATION";
             }
         }

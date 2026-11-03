@@ -1,0 +1,61 @@
+# radiator-config-template
+{
+  "description": "Upload and replace Radiator UI and Management API certificates and keys",
+  "items": [
+    {
+      "id": "MANAGEMENT_API_CERT",
+      "label": "Radiator UI and Management API certificate (chain) file",
+      "description": "Radiator UI and Management API certificate (chain) file",
+      "type": "file_upload",
+      "file_type": "cert",
+      "private_key_id": "MANAGEMENT_API_KEY",
+      "private_key_password_id": "MANAGEMENT_API_KEY_PASSWORD",
+      "path": "<root>/management/tls/certs",
+      "filename_id": "MANAGEMENT_API_CERT_FILE",
+      "placeholder": "MANAGEMENT_API_CERT",
+      "readOnly": true
+    },
+    {
+      "id": "MANAGEMENT_API_KEY",
+      "label": "Radiator UI and Management API private key file for the certificate",
+      "description": "Radiator UI and Management API private key file",
+      "type": "file_upload",
+      "file_type": "key",
+      "path": "<root>/management/tls/keys",
+      "filename_id": "MANAGEMENT_API_KEY_FILE",
+      "placeholder": "MANAGEMENT_API_KEY",
+      "readOnly": true
+    },
+    {
+      "id": "MANAGEMENT_API_KEY_PASSWORD",
+      "label": "Radiator UI and Management API private key password if any",
+      "description": "Password for Radiator UI and Management API for private key file in case the private key is password protected",
+      "type": "secret",
+      "optional": true
+    }
+  ]
+}
+# radiator-config-template
+# Certificates configuration generated from template
+#
+# Each certificate/key is uploaded to management/tls/certs or
+# management/tls/keys and configured here.
+
+certificates {
+  {{#if MANAGEMENT_API_CERT_FILE}}
+  # Certificate
+  x509 "MANAGEMENT_API_CERT" {
+    filename "{{{MANAGEMENT_API_CERT_FILE}}}";
+  }
+  {{/if}}
+
+  {{#if MANAGEMENT_API_KEY_FILE}}
+  # Private key
+  key "MANAGEMENT_API_KEY" {
+    filename "{{{MANAGEMENT_API_KEY_FILE}}}";
+    {{#if MANAGEMENT_API_KEY_PASSWORD}}
+    password "{{{MANAGEMENT_API_KEY_PASSWORD}}}";
+    {{/if}}
+  }
+  {{/if}}
+}

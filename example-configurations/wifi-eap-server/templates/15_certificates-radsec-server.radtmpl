@@ -8,6 +8,8 @@
       "description": "RadSec server certificate (chain) file",
       "type": "file_upload",
       "file_type": "cert",
+      "private_key_id": "RADSEC_SERVER_KEY",
+      "private_key_password_id": "RADSEC_SERVER_KEY_PASSWORD",
       "path": "<root>/tls/certs",
       "filename_id": "RADSEC_SERVER_CERT_FILE",
       "placeholder": "RADSEC_SERVER_CERT",
@@ -67,7 +69,7 @@
 # radiator-config-template
 # Certificates configuration generated from template
 #
-# Each certificate/key is uploaded to tls/certs, tls/key or tls/ca and
+# Each certificate/key is uploaded to tls/certs, tls/keys or tls/ca and
 # configured here. CA directories are stored under tls/ca.
 
 certificates {
@@ -93,7 +95,7 @@ certificates {
     {{/if}}
 
     {{#if RADSEC_SERVER_CLIENT_CA_DIRECTORY_PATH}}
-    x509-directory "RADSEC_SERVER_CLIENT_CA_DIRECTORY" {
+    x509_directory "RADSEC_SERVER_CLIENT_CA_DIRECTORY" {
         directory "{{{RADSEC_SERVER_CLIENT_CA_DIRECTORY_PATH}}}";
         # The interval in milliseconds for checking the contents of RadSec
         # server client CA certificate directory for new CA certificates.

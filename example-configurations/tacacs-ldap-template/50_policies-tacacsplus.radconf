@@ -48,15 +48,15 @@ aaa {
 
             debug "=== AUTHZ GROUPS FETCHED: %{ user.group }";
 
-            modify cache.groups[aaa.identity] = user.group[*];
+            cache.groups[tacacsplus.request.user] = user.group[*];
 
             debug "=== USER CACHE UPDATED";
 
-            modify tacacsplus.reply.message = "Access granted";
+            tacacsplus.reply.message = "Access granted";
         }
 
         # Log authentication requests
-        @final-execute {
+        @final_execute {
             invoke "LOG_AUTHENTICATION";
         }
     }
@@ -65,7 +65,7 @@ aaa {
     # ACCOUNTING
     #############################################
     handler "tacacs_accounting" {
-        # Handle only TACACS+ authentication
+        # Handle only TACACS+ accounting
         conditions all {
             tacacsplus.accounting == true;
         }
@@ -76,7 +76,7 @@ aaa {
         }
 
         # Log accounting requests
-        @final-execute {
+        @final_execute {
             invoke "LOG_ACCOUNTING";
         }
     }
@@ -91,7 +91,7 @@ aaa {
         }
 
         # Log authorization requests
-        @final-execute {
+        @final_execute {
             invoke "LOG_AUTHORIZATION";
         }
 
@@ -99,19 +99,15 @@ aaa {
             debug "=== AUTHORIZATION ===";
 
             if any {
-                cache.groups[aaa.identity] != none;
+                cache.groups[tacacsplus.request.user] != none;
             } then {
                 debug "=== USER FOUND IN CACHE";
-                modify {
-                    user.group = cache.groups[aaa.identity][*];
-                    tacacsplus.reply.message = "Authz: user ok, groups %{ user.group }";
-                }
+                user.group = cache.groups[tacacsplus.request.user][*];
+                tacacsplus.reply.message = "Authz: user ok, groups %{ user.group }";
                 debug user.group;
             } else {
                 debug "=== USER NOT FOUND IN CACHE";
-                modify {
-                    tacacsplus.reply.message = "Authz: rejected";
-                }
+                tacacsplus.reply.message = "Authz: rejected";
                 reject;
             }
 

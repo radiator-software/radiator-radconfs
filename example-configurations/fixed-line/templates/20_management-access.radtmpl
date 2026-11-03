@@ -31,7 +31,6 @@
   ]
 }
 # radiator-config-template
-# Template body (use {{VARIABLE_NAME}} for interpolation)
 clients {
     # HTTP clients list named "MANAGEMENT_ACCESS_ALLOW_LIST"
     http "MANAGEMENT_ACCESS_ALLOW_LIST" {

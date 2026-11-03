@@ -15,7 +15,7 @@ aaa {
 
             @execute {
                 must eap {
-                    eap-tls {
+                    eap_tls {
                         tls {
 
                             # EAP server private key
@@ -32,7 +32,7 @@ aaa {
                             #keylog_filename "<root>/captures/eap-tls.keylog";
                         } # end of tls block
 
-                        @post-authentication {
+                        @post_authentication {
                             # if there is a SubjectAltName email
                             if any {
                                 cert.subject_alt.email != none;
@@ -40,17 +40,17 @@ aaa {
                             # copy the email to vars for logging
                             then {
                                 # copy the email in the cert to variable vars.certemail for logging
-                                modify vars.certemail = cert.subject_alt.email;
+                                vars.certemail = cert.subject_alt.email;
 
                                 # copy the email in the cert to variable vars.aaa.identity
                                 # for authorisation requests
-                                modify vars.aaa.identity = cert.subject_alt.email;
+                                vars.aaa.identity = cert.subject_alt.email;
 
                                 # overriding the potential account_enabled check
                                 # in the authorization section
-                                modify vars.account_enabled = true;
+                                vars.account_enabled = true;
                                 # setting vars.aaa.identity variable manually
-                                #modify vars.aaa.identity = "testUser@radiatorsoftware.example.com";
+                                #vars.aaa.identity = "testUser@radiatorsoftware.example.com";
                             }
                         }
                     }
@@ -63,16 +63,18 @@ aaa {
                 #debug aaa.identity;
                 #debug vars.aaa.identity;
 
-                # copy EAP inner identity to aaa.identity for group queries
-                modify aaa.identity = vars.aaa.identity;
+                # copy the EAP-TLS certificate email saved in vars.aaa.identity
+                # to aaa.identity for group queries
+                aaa.identity = vars.aaa.identity;
 
-                # See if the account is locked
+                # Reject unless EAP-TLS marked the account enabled, which it does
+                # only when the certificate has an email address
                 map vars.account_enabled {
                     true => {
                         accept;
                     }
                     any => {
-                        reason "Account locked.";
+                        reason "Account disabled.";
                         reject;
                     }
                 }
@@ -88,27 +90,23 @@ aaa {
                 #debug user;
                 #debug user.group;
 
-                # Fetch user groups
+                # Map Entra group membership to reply attributes; reject if no group matches
                 map user.group {
                     "Students" => {
-                        modify {
-                            radius.reply.attr.filter-id = "Students";
-                            # uncomment to set VLAN ID 144 for these users
-                            #radius.reply.attr.Tunnel-Type:1 = "VLAN";
-                            #radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
-                            #radius.reply.attr.Tunnel-Private-Group-Id:1 = "144";
-                        }
+                        radius.reply.attr.filter-id = "Students";
+                        # uncomment to set VLAN ID 144 for these users
+                        #radius.reply.attr.Tunnel-Type:1 = "VLAN";
+                        #radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
+                        #radius.reply.attr.Tunnel-Private-Group-Id:1 = "144";
                         reason "Matched group Students.";
                         accept;
                     }
                     "Staff" => {
-                        modify {
-                            radius.reply.attr.filter-id = "Staff";
-                            # uncomment to set VLAN ID 145 for these users
-                            #radius.reply.attr.Tunnel-Type:1 = "VLAN";
-                            #radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
-                            #radius.reply.attr.Tunnel-Private-Group-Id:1 = "145";
-                        }
+                        radius.reply.attr.filter-id = "Staff";
+                        # uncomment to set VLAN ID 145 for these users
+                        #radius.reply.attr.Tunnel-Type:1 = "VLAN";
+                        #radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
+                        #radius.reply.attr.Tunnel-Private-Group-Id:1 = "145";
                         reason "Matched group Staff.";
                         accept;
                     }
@@ -119,11 +117,11 @@ aaa {
                 }
             }
 
-            @final-execute {
+            @final_execute {
                 invoke "LOG_AUTHENTICATION";
             }
 
-        } # handler "AUTHENTICATION"
+        } # handler "ENTRA_ID_AUTHENTICATION_EAP"
 
 
         # handler for RADIUS accounting
@@ -139,7 +137,7 @@ aaa {
                 accept;
             }
 
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
             }
         }
@@ -162,8 +160,8 @@ aaa {
                 }
             }
             # Logging to both authentication and accounting logs so it's noticed this
-            # policy triggers
-            @final-execute {
+            # handler triggers
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
                 invoke "LOG_AUTHENTICATION";
             }

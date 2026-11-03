@@ -19,7 +19,7 @@ aaa {
                } then {
                    backend {
                         name "RADIUS_PROXY_AUTH_EXAMPLE_ORG";
-                        # timeout for whole authentication attempt
+                        # maximum time to wait for the backend reply
                         #timeout 15000;
                    }
                } else if all {
@@ -27,7 +27,7 @@ aaa {
                } then {
                    backend {
                         name "RADIUS_PROXY_ACCT_EXAMPLE_ORG";
-                        # timeout for whole authentication attempt
+                        # maximum time to wait for the backend reply
                         #timeout 15000;
                    }
                } else {
@@ -38,7 +38,7 @@ aaa {
 
             # log authentication and accounting requests
             # Unknown requests are logged to authentication log
-            @final-execute {
+            @final_execute {
                 if all {
                     radius.request.code == radius.ACCOUNTING_REQUEST;
                 } then {
@@ -63,7 +63,7 @@ aaa {
                 } then {
                     backend {
                         name "RADSEC_PROXY_EXAMPLE_NET";
-                        # timeout for whole authentication attempt
+                        # maximum time to wait for the backend reply
                         #timeout 15000;
                     }
                 } else {
@@ -73,7 +73,7 @@ aaa {
             }
             # log authentication and accounting requests
             # Unknown requests are logged to authentication log
-            @final-execute {
+            @final_execute {
                 if all {
                     radius.request.code == radius.ACCOUNTING_REQUEST;
                 } then {
@@ -95,7 +95,7 @@ aaa {
 
             @execute {
                 must eap {
-                    eap-tls {
+                    eap_tls {
                         tls {
 
                             # EAP server private key
@@ -110,13 +110,13 @@ aaa {
 
                             # Use CA certificate directory certificates for
                             # client certificate validation
-                            #client_ca_certificates "EAP_SERVER_CLIENT_CA_DIRECTORY";
+                            #client_ca_certificate "EAP_SERVER_CLIENT_CA_DIRECTORY";
 
                             # TLS keylog file for debugging
                             #keylog_filename "<root>/captures/eap-tls.keylog";
                         } # end of tls block
 
-                        @post-authentication {
+                        @post_authentication {
 
                             # if there is a SubjectAltName email
                             if any {
@@ -124,7 +124,7 @@ aaa {
                             }
                             # copy the email to vars for logging
                             then {
-                                modify vars.certemail = cert.subject_alt.email;
+                                vars.certemail = cert.subject_alt.email;
                             }
 
                             # test
@@ -135,23 +135,12 @@ aaa {
                 }
 
                 # add RADIUS attributes to RADIUS reply
-                modify {
-                    radius.reply.attr.Session-Timeout = 86400;
-                    radius.reply.attr.Acct-Interim-Interval = 600;
-                    radius.reply.attr.WBA-Identity-Provider = "EXAMPLE_COM:FI";
-                }
+                radius.reply.attr.Session-Timeout = 86400;
+                radius.reply.attr.Acct-Interim-Interval = 600;
+                radius.reply.attr.WBA-Identity-Provider = "EXAMPLE_COM:FI";
             }
 
-            @final-execute {
-                chargeable-user-identity {
-                    secret "ReplaceThisSecretWithNewOne";
-                    # Optional: add this realm to chargeable user identity
-                    #realm "example.com";
-                    #
-                    # Optional: use nonce to implement chargeable user identity
-                    #           which changes periodically
-                    #nonce "InsertChangingStringOrVariableHere";
-                }
+            @final_execute {
                 invoke "LOG_AUTHENTICATION";
             }
         }
@@ -171,7 +160,7 @@ aaa {
                 accept;
             }
 
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
             }
         }
@@ -192,7 +181,7 @@ aaa {
                     reject;
                 }
             }
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
                 invoke "LOG_AUTHENTICATION";
             }

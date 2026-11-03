@@ -17,19 +17,13 @@ backends {
             # Operation timeout
             timeout 3s;
 
-            # How many sockets/connections at maximum to open
-            #connections 10;
+            # Maximum shared connections; binds use a separate exclusive pool
+            #connections { max 10; }
 
             # (Optional) Authentication
             authentication {
-                 dn "CN=admin,OU=Users,DC=example,DC=com";
-                 password "secretpw";
-
-                # SASL External authentication (for example TLS client certificate)
-                #external;
-
-                # SASL GSS-API authentication;
-                #gss-api;
+                dn "CN=admin,OU=Users,DC=example,DC=com";
+                password "secretpw";
             }
 
             ## (Optional) TLS client configuration
@@ -63,7 +57,7 @@ backends {
             base "DC=example,DC=com";
             scope sub;
             # Set the filter according to fields in your AD
-            filter "userPrincipalName=%{aaa.identity}";
+            filter "userPrincipalName=%{radius.request.attr.user-name}";
 
             # Return user DN, user.username without realm and optionally if user is member of any group
             mapping {

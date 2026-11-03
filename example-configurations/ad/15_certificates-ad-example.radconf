@@ -1,4 +1,4 @@
-# 15_certificates-ldap-example.radconf
+# 15_certificates-ad-example.radconf
 #
 # This is a file, where X.509 client, server and certificate
 # authority (CA) certificates and their filenames and paths
@@ -20,7 +20,7 @@ certificates {
     #}
     #
     ## LDAP client's private key
-    #x509 "LDAP_CLIENT_KEY" {
+    #key "LDAP_CLIENT_KEY" {
     #    filename "<root>/tls/keys/ldap_client_cert_key.pem";
     #}
     #

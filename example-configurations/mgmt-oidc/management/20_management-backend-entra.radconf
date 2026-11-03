@@ -1,0 +1,30 @@
+# management/20_management-backend-entra.radconf
+#
+# Microsoft Graph lookups for Entra users whose groups do not fit in the ID token.
+#
+
+backends {
+    # App-only Graph access with the client credentials of the Entra application.
+    # The application needs the GroupMember.Read.All application permission with admin consent.
+    http "ENTRA_GRAPH" {
+        url "https://graph.microsoft.com/";
+
+        authentication oauth2 {
+            token_url "%{vars.entra.token_url}";
+            client "%{vars.entra.client}";
+            secret "%{vars.entra.secret}";
+            scope "https://graph.microsoft.com/.default";
+        }
+
+        timeout 30000;
+        connections 10;
+
+        # Reads the IDs of all groups of the signed-in user, including nested groups.
+        get "GET_GROUP_IDS" {
+            path "/v1.0/users/%{oidc.claims.oid | url_escape}/transitiveMemberOf?$select=id&$top=999";
+            mapping json {
+                user.group += "$.value[*].id";
+            }
+        }
+    }
+}

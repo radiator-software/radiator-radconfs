@@ -3,20 +3,6 @@
   "description": "TACACS+ authorization configuration",
   "items": [
     {
-      "id": "POLICY_NAME",
-      "label": "Policy name",
-      "description": "Name for the AAA policy",
-      "type": "string",
-      "placeholder": "TACACS_AUTHORIZATION"
-    },
-    {
-      "id": "HANDLER_NAME",
-      "label": "Handler name",
-      "description": "Name for the authorization handler",
-      "type": "string",
-      "placeholder": "tacacs_authorization"
-    },
-    {
       "id": "RULES",
       "label": "Authorization rules",
       "description": "Define authorization rules that map user groups to TACACS+ argument matching and reply attributes",
@@ -27,7 +13,7 @@
         {
           "id": "RULE_GROUP",
           "label": "User group",
-          "description": "The user group name to match (e.g., 'group1'). User must be a member of this group for this rule to apply.",
+          "description": "The user group name to match (e.g., 'group1'). User must be a member of this group for this rule to apply. Only the first rule whose group the user is a member of is evaluated.",
           "type": "string",
           "placeholder": "group1"
         },
@@ -63,7 +49,7 @@
         {
           "id": "ARGUMENTS",
           "label": "Request arguments to match",
-          "description": "TACACS+ request arguments to match. All arguments must match for the rule to apply.",
+          "description": "TACACS+ request arguments to match by position: the first pattern is matched against the first request argument, the second against the second, and so on. All arguments must match for the rule to apply.",
           "type": "group",
           "min": 0,
           "layout": "table",
@@ -71,7 +57,7 @@
             {
               "id": "ARG_VALUE",
               "label": "Argument pattern",
-              "description": "Value or pattern to match against tacacsplus.request.args",
+              "description": "Value or pattern to match against the request argument in the same position",
               "type": "string",
               "placeholder": "service=shell"
             },
@@ -152,16 +138,16 @@ aaa {
 @pipeline "TACACSPLUS_RULES" {
 
     # Copy request args to vars for indexed access in conditions
-    modify {
-        vars.args = tacacsplus.request.args;
-    }
+    vars.args = tacacsplus.request.args;
 
-    # Map user's groups to TACACS+ authorization rules
-    # and check the request for valid rule.
+    # Map user's groups to TACACS+ authorization rules. Only the first rule
+    # whose group the user is a member of is evaluated, and the request is
+    # rejected if its conditions do not match.
     map user.group {
     {{#each RULES}}
     # Rule for group: {{{RULE_GROUP}}}
         "{{{RULE_GROUP}}}" => {
+    {{#if (or CLIENT ARGUMENTS)}}
             if all {
             {{#each CLIENT}}
             {{#if (eq CLIENT_MATCH_TYPE "ip")}}
@@ -181,14 +167,22 @@ aaa {
     {{/each}}
             } then {
     {{#if REPLY_ARGS}}
-                modify {
     {{#each REPLY_ARGS}}
-                    tacacsplus.reply.args += "{{{ARG}}}";
+                tacacsplus.reply.args += "{{{ARG}}}";
     {{/each}}
-                }
     {{/if}}
                 {{{RULE_ACTION}}};
+            } else {
+                reject "{{{../REJECT_MESSAGE}}}";
             }
+    {{else}}
+            # This rule has no client or argument conditions, so group
+            # membership alone selects its action
+    {{#each REPLY_ARGS}}
+            tacacsplus.reply.args += "{{{ARG}}}";
+    {{/each}}
+            {{{RULE_ACTION}}};
+    {{/if}}
         }
     {{/each}}
 
@@ -197,13 +191,6 @@ aaa {
         any => {
             reject "{{{REJECT_MESSAGE}}}";
         }
-    }
-
-    # Fallback: reject if no rule matched
-    if all {
-        aaa.result == none;
-    } then {
-        reject "{{{REJECT_MESSAGE}}}";
     }
 
 } # pipeline

@@ -26,13 +26,19 @@ aaa {
             }
 
             # log all accounting
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
             }
         }
     }
 
     policy "AUTHENTICATION" {
+        # match only RADIUS authentication requests so that other requests
+        # are handled by the DEFAULT policy
+        conditions all {
+            radius.request.code == radius.ACCESS_REQUEST;
+        }
+
         handler "AUTHENTICATION" {
             conditions all {
                 radius.request.code == radius.ACCESS_REQUEST;
@@ -42,9 +48,9 @@ aaa {
                 invoke "SET_TENANT_INFORMATION";
                 invoke "SET_YUBIKEY_INFORMATION";
 
-                # Extract the YubiKey public UID once before SQL so malformed OTPs
+                # Extract the YubiKey public UID once before the user lookup so malformed OTPs
                 # fail as normal authentication rejects instead of backend errors.
-                modify vars.presented_yubikey_public_uid = radius.request.password | yubikey(password-otp, public-uid) | recover(none);
+                vars.presented_yubikey_public_uid = radius.request.password | yubikey("password_otp", "public_uid") | recover(none);
 
                 if all {
                     vars.presented_yubikey_public_uid == none;
@@ -84,18 +90,18 @@ aaa {
                 # Validate with YubiKey Cloud (last 44 characters)
                 backend {
                     name "YUBIKEY_CLOUD";
-                    secret radius.request.password | yubikey(password-otp, otp);
+                    secret radius.request.password | yubikey("password_otp", "otp");
                 }
 
                 ## Match user groups from Okta, optional
                 #map user.group {
                 #    "Staff" => {
-                #        modify radius.reply.attr.filter-id = "Staff";
+                #        radius.reply.attr.filter-id = "Staff";
                 #        reason "Matched group Staff.";
                 #        accept;
                 #    }
                 #    "Students" => {
-                #        modify radius.reply.attr.filter-id = "Students";
+                #        radius.reply.attr.filter-id = "Students";
                 #        reason "Matched group Students.";
                 #        accept;
                 #    }
@@ -105,7 +111,7 @@ aaa {
                 #    }
                 #}
             }
-            @final-execute {
+            @final_execute {
                 invoke "LOG_AUTHENTICATION";
             }
         }
@@ -134,7 +140,7 @@ aaa {
             }
             # Logging to both authentication and accounting logs so it's noticed this
             # policy triggers
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
                 invoke "LOG_AUTHENTICATION";
             }

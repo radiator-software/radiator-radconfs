@@ -1,0 +1,22 @@
+# Radiator Policy Server and Radiator Core TACACS+ server configuration
+
+# Configure TACACS+ server
+servers {
+    tacacs_plus "TACACS_PLUS" {
+        # Listener configuration
+        listen {
+            # Transport protocol: tcp
+            protocol tcp;
+
+            # Transport protocol port to listen
+            port 49;
+
+            # IP addresses to bind
+            ip 0.0.0.0;
+            ip ::;
+        }
+
+        # Allow connections/requests from clients
+        clients "CLIENTS_TACACSPLUS_ALL";
+    }
+}

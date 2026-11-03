@@ -13,8 +13,8 @@ backends {
         # Query named "FIND_USER"
         query "FIND_USER" {
           mapping {
-            user.username = doc | jsonpath("$.users[?(@.username == '%{aaa.identity}')].username");
-            user.password = doc | jsonpath("$.users[?(@.username == '%{aaa.identity}')].password");
+            user.username = doc | jsonpath("$.users[?(@.username == $aaa.identity)].username");
+            user.password = doc | jsonpath("$.users[?(@.username == $aaa.identity)].password");
           }
         }
     }

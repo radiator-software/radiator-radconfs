@@ -9,6 +9,6 @@ backends {
         username "%{vars.aaa.yubikey.user}";               # Yubico client ID
         secret "%{vars.aaa.yubikey.secret}";               # Yubico API key (base64)
         timeout 5s;
-        # connections 64;                                  # optional, default 1024
+        # connections 64;                                  # optional, default 100
     }
 }

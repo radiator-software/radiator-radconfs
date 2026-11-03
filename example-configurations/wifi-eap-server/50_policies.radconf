@@ -27,20 +27,17 @@ aaa {
             }
 
             # log all accounting
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
             }
         }
     }
 
 
-    # policy for RADIUS PAP authentication and clients
+    # policy for RADIUS PAP authentication
     policy "PAP" {
-        conditions any {
-            radius.client starts "PAP";
-            radius.client == "PAP_CLIENT";
-            radius.client == "LOCALHOST_IPV4";
-            radius.client == "LOCALHOST_IPV6";
+        conditions all {
+            radius.request.method == radius.METHOD_PAP;
         }
 
         # handler for RADIUS authentication
@@ -61,7 +58,7 @@ aaa {
                 must pap;
             }
 
-            @final-execute {
+            @final_execute {
                 invoke "LOG_AUTHENTICATION";
             }
 
@@ -83,7 +80,7 @@ aaa {
                     reject;
                 }
             }
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
                 invoke "LOG_AUTHENTICATION";
             }
@@ -94,8 +91,7 @@ aaa {
     # policy for RADIUS EAP authentication and clients
     policy "EAP" {
         conditions any {
-            radius.client starts "EAP";
-            radius.client == "EAP_CLIENT";
+            radius.request.method == radius.METHOD_EAP;
             radius.client == "RADSEC_CLIENTS_INTERNET";
         }
 
@@ -111,7 +107,7 @@ aaa {
                 must eap {
 
                     # EAP-TLS client authentication
-                    eap-tls {
+                    eap_tls {
                         tls {
 
                             # EAP server private key
@@ -128,9 +124,14 @@ aaa {
                             # client certificate validation
                             #client_ca_certificate "EAP_SERVER_CLIENT_CA_DIRECTORY";
 
+                            # Certificate revocation list (CRL) for rejecting
+                            # revoked client certificates. The CRL must be
+                            # issued by the CA that signed the client certificates.
+                            crl "EAP_SERVER_CLIENT_CRL";
+
                         } # end of tls block
 
-                        @post-authentication {
+                        @post_authentication {
 
                             # if there is a SubjectAltName email
                             if any {
@@ -138,17 +139,17 @@ aaa {
                             }
                             # copy the email to vars for logging
                             then {
-                                modify vars.certemail = cert.subject_alt.email;
+                                vars.certemail = cert.subject_alt.email;
                             }
 
                             # log authentication requests
                             invoke "LOG_AUTHENTICATION";
 
-                        } # post-authentication
-                    } # end of eap-tls block
+                        } # post_authentication
+                    } # end of eap_tls block
 
                     # EAP-TTLS authentication
-                    eap-ttls {
+                    eap_ttls {
                         tls {
 
                             # EAP server private key
@@ -157,16 +158,11 @@ aaa {
                             # EAP server certificate chain file
                             certificate "EAP_SERVER_CERT";
 
-                            # For password authentication do not require client certificate
+                            # EAP-TTLS doesn't typically require a client
+                            # certificate. If needed, see the eap_tls block
+                            # above for configuring client certificate
+                            # verification and the CRL.
                             require_client_certificate false;
-
-                            # CA certificate for verifying EAP-TLS
-                            # client certificates
-                            #client_ca_certificate "EAP_SERVER_CLIENT_CA";
-
-                            # Use CA certificate directory certificates for
-                            # client certificate validation
-                            #client_ca_certificate "EAP_SERVER_CLIENT_CA_DIRECTORY";
 
                         } # end of tls block
 
@@ -199,7 +195,9 @@ aaa {
                                 }
                             } else {
                                 eap {
-                                    eap-mschapv2 {
+                                    eap_mschapv2 {
+                                        max_password_retries 0;
+
                                         @authentication {
                                             backend { name "JSONFILE_USERS_INTERNAL"; query "FIND_USER"; }
                                             mschapv2;
@@ -209,7 +207,7 @@ aaa {
                             }
                         }
 
-                        #@post-authentication {
+                        #@post_authentication {
                         #
                         #    # if there is a SubjectAltName email
                         #    if any {
@@ -217,19 +215,74 @@ aaa {
                         #    }
                         #    # copy the email to vars for logging
                         #    then {
-                        #        modify vars.certemail = cert.subject_alt.email;
+                        #        vars.certemail = cert.subject_alt.email;
                         #    }
-                        #} # post-authentication
+                        #} # post_authentication
 
                         # log inner authentication requests
-                        @post-authentication {
+                        @post_authentication {
                             invoke "LOG_AUTHENTICATION";
                         }
 
                     }
 
                     # PEAP authentication
-                    eap-peap {
+                    eap_peap {
+                        tls {
+
+                            # EAP server private key
+                            certificate_key "EAP_SERVER_KEY";
+
+                            # EAP server certificate chain file
+                            certificate "EAP_SERVER_CERT";
+
+                            # EAP-PEAP doesn't typically require a client
+                            # certificate. If needed, see the eap_tls block
+                            # above for configuring client certificate
+                            # verification and the CRL.
+                            require_client_certificate false;
+
+                        } # end of tls block
+
+                        @authentication {
+                            eap {
+                                # authenticate the EAP-PEAP inner requests with EAP-MSCHAPv2
+                                eap_mschapv2 {
+                                    max_password_retries 0;
+
+                                    @authentication {
+                                        backend {
+                                            name "JSONFILE_USERS_INTERNAL";
+                                            query "FIND_USER";
+                                        }
+                                        mschapv2;
+                                    }
+                                    # log inner authentication
+                                    @post_authentication {
+                                        invoke "LOG_AUTHENTICATION";
+                                    }
+                                }
+                            }
+                        }
+
+                        #@post_authentication {
+                        #
+                        #    # if there is a SubjectAltName email
+                        #    if any {
+                        #        cert.subject_alt.email != none;
+                        #    }
+                        #    # copy the email to vars for logging
+                        #    then {
+                        #        vars.certemail = cert.subject_alt.email;
+                        #    }
+                        #} # post_authentication
+
+                    }
+
+                    # EAP-TEAP authentication with PAP. See the eap-teap-windows
+                    # example for chained machine and user authentication with
+                    # EAP-TLS and EAP-MSCHAPv2.
+                    eap_teap {
                         tls {
 
                             # EAP server private key
@@ -241,65 +294,42 @@ aaa {
                             # For password authentication do not require client certificate
                             require_client_certificate false;
 
-                            # CA certificate for verifying EAP-TLS
-                            # client certificates
-                            #client_ca_certificate "EAP_SERVER_CLIENT_CA";
-
-                            # CA certificate directory for verifying
-                            # client certificate with multiple CA certificates
-                            #client_ca_certificate "EAP_SERVER_CLIENT_CA_DIRECTORY";
-
                         } # end of tls block
 
                         @authentication {
-                            eap {
-                                # authenticate the EAP-PEAP inner requests with EAP-MSCHAPv2
-                                eap-mschapv2 {
-                                    @authentication {
-                                        backend {
-                                            name "JSONFILE_USERS_INTERNAL";
-                                            query "FIND_USER";
-                                        }
-                                        mschapv2;
-                                    }
-                                    # log inner authentication
-                                    @post-authentication {
-                                        invoke "LOG_AUTHENTICATION";
-                                    }
-                                }
+                            # Request EAP-TEAP user identity
+                            eap_teap_identity_type user;
+
+                            # Prompt the client for a username and password. With a
+                            # challenge the client answers with a password, so inner
+                            # EAP methods such as EAP-MSCHAPv2 cannot be offered here.
+                            challenge "Enter user password?";
+
+                            backend {
+                                name "JSONFILE_USERS_INTERNAL";
+                                query "FIND_USER";
                             }
+                            pap;
                         }
 
-                        #@post-authentication {
-                        #
-                        #    # if there is a SubjectAltName email
-                        #    if any {
-                        #        cert.subject_alt.email != none;
-                        #    }
-                        #    # copy the email to vars for logging
-                        #    then {
-                        #        modify vars.certemail = cert.subject_alt.email;
-                        #    }
-                        #} # post-authentication
-
-                    }
-                    # TEAP authentication is also supported, please
-                    # see full configuration example in eap-teap-windows
+                        # log inner authentication requests
+                        @post_authentication {
+                            invoke "LOG_AUTHENTICATION";
+                        }
+                    } # eap_teap
                 } # eap
 
-                # add default VLAN attributes if there are not already attributes
-                modify {
-                    radius.reply.attr.Tunnel-Type:1 = "VLAN";
-                    # with FreeRADIUS dictionary
-                    #radius.reply.attr.Tunnel-Medium-Type:1 = "IEEE-802";
-                    # with Radiator dictionary
-                    radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
-                    # assign VLAN ID 145 to RADIUS attribute
-                    radius.reply.attr.Tunnel-Private-Group-Id:1 = "145";
-                }
+                # set VLAN attributes, overwriting any existing values
+                radius.reply.attr.Tunnel-Type:1 = "VLAN";
+                # with FreeRADIUS dictionary
+                #radius.reply.attr.Tunnel-Medium-Type:1 = "IEEE-802";
+                # with Radiator dictionary
+                radius.reply.attr.Tunnel-Medium-Type:1 = "Ether_802";
+                # assign VLAN ID 145 to RADIUS attribute
+                radius.reply.attr.Tunnel-Private-Group-Id:1 = "145";
             }
 
-            @final-execute {
+            @final_execute {
                 invoke "LOG_AUTHENTICATION";
             }
 
@@ -320,7 +350,7 @@ aaa {
                     reject;
                 }
             }
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
                 invoke "LOG_AUTHENTICATION";
             }
@@ -349,7 +379,7 @@ aaa {
                     reject;
                 }
             }
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
                 invoke "LOG_AUTHENTICATION";
             }

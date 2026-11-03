@@ -14,15 +14,18 @@ aaa {
             }
 
             @execute {
-                # search for username from backend "USERS_INTERNAL_FILE"
-                backend "USERS_INTERNAL_FILE";
+                # search for username from backend "JSONFILE_USERS_INTERNAL"
+                backend {
+                    name "JSONFILE_USERS_INTERNAL";
+                    query "FIND_USER";
+                }
 
                 # try to authenticate user with PAP
                 # "must" indicates that only pap authentication is accepted
                 must pap;
             }
 
-            @final-execute {
+            @final_execute {
                 invoke "LOG_AUTHENTICATION";
             }
         }
@@ -40,7 +43,7 @@ aaa {
                 accept;
             }
 
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
             }
         }
@@ -61,7 +64,7 @@ aaa {
                     reject;
                 }
             }
-            @final-execute {
+            @final_execute {
                 invoke "LOG_ACCOUNTING";
                 invoke "LOG_AUTHENTICATION";
             }

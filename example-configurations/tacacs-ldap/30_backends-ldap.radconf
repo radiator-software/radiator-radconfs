@@ -9,20 +9,14 @@ backends {
             # Operation timeout in milliseconds
             timeout 3000;
 
-            # How many sockets/connections at maximum to open
-            connections 10;
+            # Maximum shared connections; binds use a separate exclusive pool
+            connections { max 10; }
 
             # (Optional) Authentication
             authentication {
                 # Basic bind authentication
                 dn "cn=manager,dc=example,dc=com";
                 password "<manager_password>";
-
-                # SASL External authentication (for example TLS client certificate)
-                #external;
-
-                # SASL GSS-API authentication;
-                #gss-api;
             }
 
             # (Optional) TLS client configuration
@@ -48,21 +42,21 @@ backends {
         #   ...
         #}
 
-        # (Optional) Per search/operation authentication
-        #authentication {
-        #    # Basic bind authentication
-        #    # Both dn and password parameter support %{...} attribute templates
-        #    dn "uid=%{aaa.identity},dc=example,dc=com";
-        #    password "%{auth.response}";
-        #}
-
         # LDAP operations
 
         # LDAP search operation named "find_user"
         search "find_user" {
             base "ou=People,dc=example,dc=com";
             scope sub;
-            filter "cn=%{aaa.identity}";
+            filter "cn=%{tacacsplus.request.user}";
+
+            # (Optional) Per search authentication instead of the server authentication
+            #authentication {
+            #    # Basic bind authentication
+            #    # Both dn and password parameter support %{...} attribute templates
+            #    dn "uid=%{tacacsplus.request.user},dc=example,dc=com";
+            #    password "%{auth.response}";
+            #}
 
             # Result value mapping
             mapping {
