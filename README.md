@@ -29,15 +29,6 @@ Minimal configuration for clearing the existing configuration for easy start ove
 - Importable package: [`default.zip`](https://raw.githubusercontent.com/radiator-software/radiator-radconfs/main/importable-zips/default.zip)
 - Configuration files and README: [`example-configurations/default`](example-configurations/default/)
 
-### Diameter and RADIUS Accounting (`diameter-accounting`)
-
-Local accounting collection, structured final-outcome logs, a runnable
-START/INTERIM/STOP sender and R4 bridge peer configurations for applications 1 and 3.
-The R4 paths require the accounting fixes described in the example.
-
-- Importable package: [`diameter-accounting.zip`](https://raw.githubusercontent.com/radiator-software/radiator-radconfs/main/importable-zips/diameter-accounting.zip)
-- Configuration files and README: [`example-configurations/diameter-accounting`](example-configurations/diameter-accounting/)
-
 ### EAP-TEAP with Windows user and machine authentication (`eap-teap-windows`)
 
 EAP-TEAP authentication for Windows with inner EAP-TLS machine authentication and EAP-MSCHAPv2 user authentication.
