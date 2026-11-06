@@ -1,0 +1,44 @@
+# 30_backends-netlogon.radconf
+#
+# Radiator backends configuration for Active Directory over Netlogon
+#
+
+backends {
+    # Netlogon backend that verifies PAP, MSCHAP and MSCHAPv2 credentials
+    # with an Active Directory domain controller.
+    netlogon "AD" {
+        # Domain controller host and its fixed Netlogon port, set with the
+        # DCTcpipPort registry value on the domain controller
+        endpoint "dc1.example.com:50001";
+
+        # Domain controller name sent as the Netlogon server name
+        domain_controller "\\\\DC1";
+
+        # NetBIOS name of the domain that owns the computer account
+        computer_domain "EXAMPLE";
+
+        # Computer account of this Radiator instance, created in Active
+        # Directory before Radiator starts
+        computer_name "RADIATOR1";
+        machine_account "RADIATOR1$";
+        machine_password "%{env.NETLOGON_MACHINE_PASSWORD}";
+
+        # Number of connections that share the secure channel
+        connections 4;
+
+        # Domains that restrict NTLM refuse user@realm names. Uncomment to
+        # send the user name part as the account name and the realm as the
+        # logon domain. Only for user@realm identities: a DOMAIN\user
+        # identity would be sent unchanged as the account name.
+        #username "%{aaa.identity.name}";
+        #domain "%{aaa.identity.realm}";
+
+        # Users of trusted domains are accepted only when listed. Without
+        # this statement, only users of computer_domain are accepted.
+        #allowed_logon_domain "EXAMPLE";
+        #allowed_logon_domain "PARTNER";
+
+        # Uncomment when no client uses MSCHAPv1
+        #allow_mschapv1 false;
+    }
+}

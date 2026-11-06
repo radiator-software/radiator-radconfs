@@ -17,6 +17,10 @@ NOTE: Select "Management configuration (management/)" checkbox when importing.
 2. Create the realm roles `radiator-admin` and `radiator-monitor` and assign them to users. Enable "Add to ID token" in the realm roles mapper of the client's dedicated scope.
 3. Fill in the issuer (`https://KEYCLOAK/realms/REALM`), client ID, client secret and redirect URL in `management/20_management.radconf`.
 
+## Experimental management roles
+
+The example grants privilege levels. To use experimental [management roles](https://docs.radiatorsoftware.com/latest/docs/configuration/management/#management-roles) instead, add a `roles` block to the `management` block and assign roles with `user.management_role` in `management/25_management-policy.radconf`. Map identity provider roles and groups to role names explicitly, for example `user.management_role = "helpdesk";` inside a `map oidc.claims.roles` case. Do not copy them unfiltered: every `user.management_role` value is a role name, so a provider role named like a built-in role, such as `all`, would grant that role. The general `user.role` attribute grants no management access.
+
 Remove the `oidc` block of a provider that you do not use. Radiator logs a warning after loading the configuration when it cannot read a provider's metadata.
 
 ## Radiator UI
