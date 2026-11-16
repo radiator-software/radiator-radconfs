@@ -1,0 +1,122 @@
+# 50_policies.radconf
+#
+# Radiator policy configuration
+#
+
+aaa {
+
+    policy "SUBSCRIBERS" {
+        # policy for RADIUS authentication
+        conditions all {
+            radius.request.code == radius.ACCESS_REQUEST;
+        }
+
+        # handlers for various realms, conditions control which handler is used
+
+        # handler for RADIUS authentication for example* realm
+        # matches e.g. example.com, example.net, my-example.org etc.
+        handler "EXAMPLE-REALM-AUTH" {
+            conditions all {
+                # match only RADIUS authentication requests when realm contains example
+                radius.request.code == radius.ACCESS_REQUEST;
+                aaa.identity.realm contains "example";
+            }
+
+            @execute {
+                # if needed, the realm can be stripped from the username like this
+                #rewrite aaa.identity /^([^@]+).*/ "$1";
+
+                # search for username from backend DB
+                backend {
+                    name "RADIATORDB";
+                    query "FIND_USER";
+                }
+                # Authenticate with pap
+                pap;
+
+                # Return subscriber attributes from the RadiatorDB
+                radius.reply.attr.Framed-IP-Address = vars.framed_ip_address;
+                radius.reply.attr.Framed-IP-Netmask = vars.framed_ip_netmask;
+                radius.reply.attr.Framed-Route = vars.framed_route;
+            }
+
+            @final_execute {
+                invoke "LOG_AUTHENTICATION";
+            }
+        }
+
+        # Multiple handlers can be defined when needed, first handler where conditions match is used
+
+        # Default handler for all other authentication requests regardless of realm
+        # No conditions, so this matches all requests that end up to this policy and do not match earlier handler
+        handler "DEFAULT" {
+            @execute {
+                # This can simply reject or could try to authenticate or return default reply attributes
+                reject;
+            }
+
+            @final_execute {
+                invoke "LOG_AUTHENTICATION";
+            }
+        }
+    }
+
+    policy "SESSIONS" {
+        conditions all {
+            # match only RADIUS accounting requests
+            radius.request.code == radius.ACCOUNTING_REQUEST;
+        }
+
+        # handler for storing session data to RadiatorDB
+        handler "SESSIONS" {
+            @execute {
+                # until end runs to the end regardless if the backend call fails
+                # when error below catches backend failures
+                until end {
+                    backend {
+                        name "RADIATORDB";
+                        query "STORE_SESSIONS";
+                    }
+                } when error {
+                    # This just logs to the application log the debug info, as the assumption is
+                    # that the DB calls do not error out
+                    # debug is logged to application when 15_logging.radconf has loglevel debug in use
+                    debug "Backend error: %{aaa.caught_error}";
+                }
+                # Always accept accounting
+                accept;
+            }
+
+            # Log accounting to file also
+            @final_execute {
+                invoke "LOG_ACCOUNTING";
+            }
+        }
+    }
+
+    # DEFAULT policy to catch anything else. This is a backup policy, all requests
+    # should be handled by previous policies
+    policy "DEFAULT" {
+        # DEFAULT handler rejects all authentication, accepts accounting
+        handler "DEFAULT" {
+            conditions any {
+                radius.request.code == any;
+            }
+            @execute {
+                if all {
+                    radius.request.code == radius.ACCOUNTING_REQUEST;
+                } then {
+                    accept;
+                } else {
+                    reason "DEFAULT: No other matching authentication handler found.";
+                    reject;
+                }
+            }
+            @final_execute {
+                invoke "LOG_ACCOUNTING";
+                invoke "LOG_AUTHENTICATION";
+            }
+        }
+    }
+}
+

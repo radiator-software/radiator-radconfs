@@ -1,0 +1,42 @@
+# 30_backends-users-internal.radconf
+#
+# Backends for internal users authentication with TOTP
+#
+backends {
+    sqlite "SQLITE_USERS_INTERNAL_TOTP" {
+        # Database filename relative to <root>
+        filename "<root>/db/users-internal/users-internal-totp.sqlite";
+
+        # SQL query to find user and TOTP information
+        query "FIND_USER" {
+            # SQL statement
+            statement "SELECT username, password, totp_enabled, totp_seed, totp_last_timestep FROM users WHERE username = ? AND status = 'active'";
+
+            # Query argument binding in order
+            bindings {
+                aaa.identity;
+            }
+
+            # Result value mapping
+            mapping {
+                user.username = username;
+                user.password = password;
+                # TOTP seed for HMAC-OTP authentication
+                hmac-otp.secret = totp_seed;
+                # Last used timestep for replay protection
+                hmac-otp.timestep.last = totp_last_timestep;
+                # Option to enable/disable MFA per user
+                vars.totp_enabled = totp_enabled;
+            }
+        }
+
+        # Update the timestep after successful TOTP authentication for replay protection
+        statement "UPDATE_TOTP_TIMESTEP" {
+            statement "UPDATE users SET totp_last_timestep = ? WHERE username = ?";
+            bindings {
+                hmac-otp.timestep.last;
+                user.username;
+            }
+        }
+    }
+}

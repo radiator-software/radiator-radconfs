@@ -1,0 +1,14 @@
+ui {
+    sidebar {
+        section "Management";
+        item "Management users" {
+            url "/configuration/files/details/?filename=management%2Fmanagement-users.json5&template-hint=management-users.json5.radtmpl";
+            icon "LockOpen";
+        }
+        section "Main";
+        item "RadiatorDB" {
+            url "/radiatordb";
+            icon "Storage";
+        }
+    }
+}

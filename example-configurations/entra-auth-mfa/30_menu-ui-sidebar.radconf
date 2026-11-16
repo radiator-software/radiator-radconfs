@@ -1,0 +1,19 @@
+ui {
+    sidebar {
+        section "Management";
+        item "Management users" {
+            url "/configuration/files/details/?filename=management%2Fmanagement-users.json5&template-hint=management-users.json5.radtmpl";
+            icon "LockOpen";
+        }
+
+        section "Configuration";
+        item "Entra details" {
+            url "/configuration/files/details/?filename=25_pipeline-entra-credentials.radconf";
+            icon "Assignment";
+        }
+        item "Local clients" {
+            url "/configuration/files/details/?filename=40_clients-radius.radconf";
+            icon "Router";
+        }
+    }
+}

@@ -1,0 +1,123 @@
+# management/25_management-policy.radconf
+#
+# Authorizes Radiator UI users. Single sign-on users get their privileges from the roles and
+# groups that their identity provider puts in the ID token. Local users in
+# management-users.json5 keep signing in with a password, also when the identity providers
+# are not reachable.
+#
+
+aaa {
+    policy "MANAGEMENT_POLICY" {
+        conditions all {
+            aaa.protocol == protocol.MANAGEMENT;
+        }
+
+        handler "AUTHENTICATION" {
+            @execute {
+                http_management_authentication {
+                    # Runs at sign-in and whenever the session authorization is refreshed.
+                    # Single sign-on sessions keep their claims, so refreshes map them again.
+                    @resolve {
+                        map oidc.provider {
+                            "entra" => {
+                                invoke "RESOLVE_ENTRA_USER";
+                            }
+                            "keycloak" => {
+                                invoke "RESOLVE_KEYCLOAK_USER";
+                            }
+                            none => {
+                                # Local password users. Single sign-on identities never reach
+                                # this branch, so they cannot become a local user of the same name.
+                                backend {
+                                    name "MANAGEMENT_USERS";
+                                    query "FIND_USER";
+                                }
+                            }
+                            any => {
+                                reject "Unknown single sign-on provider";
+                            }
+                        }
+                    }
+
+                    # Single sign-on users skip this, because the identity provider verified them.
+                    @verify {
+                        http_basic_auth;
+                    }
+                }
+            }
+        }
+    }
+
+    # Maps Entra app roles, or group object IDs, to Radiator UI privileges.
+    @pipeline "RESOLVE_ENTRA_USER" {
+        user.username = aaa.identity;
+
+        # Users with too many groups get a reference to Microsoft Graph instead of the
+        # groups claim (group overage), so the groups are read from Graph.
+        if all {
+            oidc.claims._claim_names.groups != none;
+        } then {
+            invoke "SET_ENTRA_GRAPH_CREDENTIALS";
+            backend {
+                name "ENTRA_GRAPH";
+                query "GET_GROUP_IDS";
+            }
+        } else {
+            user.group += oidc.claims.groups;
+        }
+
+        # App roles assigned to users in the Entra application are the simplest mapping.
+        # The first matching role decides, so list the strongest first.
+        map oidc.claims.roles {
+            "Radiator.Admin" => {
+                user.privilege = "all";
+                user.radiatordb_role = "admin";
+            }
+            "Radiator.Operator" => {
+                user.privilege = "write";
+                user.radiatordb_role = "operations";
+            }
+            "Radiator.Monitor" => {
+                user.privilege = "monitor";
+            }
+            any => {
+                # Without an app role, map the object IDs of Entra security groups.
+                map user.group {
+                    "00000000-0000-0000-0000-000000000001" => {
+                        user.privilege = "all";
+                        user.radiatordb_role = "admin";
+                    }
+                    "00000000-0000-0000-0000-000000000002" => {
+                        user.privilege = "monitor";
+                    }
+                    any => {
+                        reject "No Radiator UI role or group in Entra";
+                    }
+                }
+            }
+        }
+    }
+
+    # Maps Keycloak realm roles to Radiator UI privileges.
+    @pipeline "RESOLVE_KEYCLOAK_USER" {
+        user.username = aaa.identity;
+
+        # Keycloak lists realm roles in realm_access.roles. Enable "Add to ID token" in the
+        # realm roles mapper of the client so the claim reaches Radiator.
+        user.role += oidc.claims.realm_access.roles;
+        user.group += oidc.claims.groups;
+
+        map oidc.claims.realm_access.roles {
+            "radiator-admin" => {
+                user.privilege = "all";
+                user.radiatordb_role = "admin";
+            }
+            "radiator-monitor" => {
+                user.privilege = "monitor";
+            }
+            any => {
+                reject "No Radiator UI role in Keycloak";
+            }
+        }
+    }
+}

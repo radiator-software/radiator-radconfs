@@ -1,0 +1,12 @@
+{
+  "users": [
+    {
+    "username": "mikem",
+    "yubikey_uid": "cccjgjgkhcbb",
+    },
+    {
+    "username": "robin",
+    "yubikey_uid": "ccccfddgtvfr",
+    }
+]
+}

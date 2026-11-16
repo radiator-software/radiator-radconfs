@@ -1,0 +1,153 @@
+# 50_policies.radconf
+#
+# Radiator policy configuration
+#
+# Fill in the Okta details to 25_pipeline-okta-credentials.radconf.
+# configure also the group check with correct group name(s)
+
+aaa {
+
+    # first matching policy is selected so for all accounting
+    # to be processed within its own policy, it should
+    # be the first one and match all accounting requests
+    policy "ACCOUNTING" {
+
+        conditions all {
+            # match all accounting requests
+            radius.request.code == radius.ACCOUNTING_REQUEST;
+        }
+
+        handler "ACCOUNTING" {
+            conditions all {
+                # match only RADIUS accounting requests
+                radius.request.code == radius.ACCOUNTING_REQUEST;
+            }
+
+            @execute {
+                # accept all accounting
+                accept;
+            }
+
+            # log all accounting
+            @final_execute {
+                invoke "LOG_ACCOUNTING";
+            }
+        }
+    }
+
+
+    # policy for Okta authentication
+    policy "OKTA_AUTHENTICATION" {
+        conditions any {
+            radius.request.method == radius.METHOD_PAP;
+        }
+
+        handler "OKTA_AUTHENTICATION" {
+            conditions all {
+                # match only RADIUS authentication requests
+                radius.request.code == radius.ACCESS_REQUEST;
+                # optionally match also wanted realm
+                # aaa.identity.realm == "<realm>";
+            }
+
+            @execute {
+                invoke "SET_TENANT_INFORMATION";
+
+                # Use OAuth2 authentication
+                try {
+                    backend {
+                        name "OKTA_ROPC";
+                        query "AUTH_USERS";
+                    }
+                }
+                # Check if the backend call failed, return reject if so
+                if all {
+                    aaa.caught_error != none;
+                } then {
+                    reason aaa.caught_error;
+                    reject;
+                }
+
+                # Match user groups
+                map user.group {
+                    "Staff" => {
+                        radius.reply.attr.filter-id = "Staff";
+                        reason "Matched group Staff.";
+                        accept;
+                    }
+                    "Students" => {
+                        radius.reply.attr.filter-id = "Students";
+                        reason "Matched group Students.";
+                        accept;
+                    }
+                    any => {
+                        reason "None of user groups matched, so the authentication is rejected.";
+                        reject;
+                    }
+                }
+            }
+
+            @final_execute {
+                invoke "LOG_AUTHENTICATION";
+            }
+        }
+
+        # DEFAULT-AUTH handler rejects authentication requests that no earlier handler
+        # in this policy matched
+        handler "DEFAULT-AUTH" {
+            conditions any {
+                radius.request.code == any;
+            }
+            @execute {
+                if all {
+                    radius.request.code == radius.ACCOUNTING_REQUEST;
+                } then {
+                    accept;
+                } else {
+                    reason "DEFAULT: No other matching authentication handler found.";
+                    reject;
+                }
+            }
+            @final_execute {
+                if all {
+                    radius.request.code == radius.ACCOUNTING_REQUEST;
+                } then {
+                    invoke "LOG_ACCOUNTING";
+                } else {
+                    invoke "LOG_AUTHENTICATION";
+                }
+            }
+        }
+    }
+
+
+    # DEFAULT policy is to reject authentication and accept accounting
+    # matches if none of the previous policies match
+    policy "DEFAULT" {
+
+        # a policy without conditions will handle any request
+
+        # DEFAULT handler rejects all authentication, accepts accounting
+        handler "DEFAULT" {
+            conditions any {
+                radius.request.code == any;
+            }
+            @execute {
+                if all {
+                    radius.request.code == radius.ACCOUNTING_REQUEST;
+                } then {
+                    accept;
+                } else {
+                    reason "DEFAULT: No other matching authentication handler found.";
+                    reject;
+                }
+            }
+            # Logging to both authentication and accounting logs so it's noticed this
+            # policy triggers
+            @final_execute {
+                invoke "LOG_ACCOUNTING";
+                invoke "LOG_AUTHENTICATION";
+            }
+        }
+    }
+}

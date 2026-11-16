@@ -1,0 +1,276 @@
+# 20_radiatordb.radconf
+#
+# RadiatorDB server, query and collection configurations
+#
+
+backends {
+    radiatordb "RADIATORDB" {
+        server "first" {
+            host "203.0.113.104";
+            port 5432;
+            database "radiatordb";
+            username "radiator";
+            password "radiator";
+        }
+
+        # When configuring multi master mode, add additional servers here
+        #server "second" {
+        #    host "203.0.113.105";
+        #    port 5432;
+        #    database "radiatordb";
+        #    username "radiator";
+        #    password "radiator";
+        #}
+
+        # Find user from the RadiatorDB collection based on the key
+        # mapping returns the user attributes from the RadiatorDB
+        query "FIND_USER" {
+            collection "subscribers";
+            key aaa.identity;
+            mapping {
+                user.username = key[0];
+                user.password = doc | jsonpath("$.passwordHash");
+                vars.framed_ip_address = doc | jsonpath("$.framedIPAddress");
+                vars.framed_ip_netmask = doc | jsonpath("$.framedIPNetmask");
+                vars.framed_route = doc | jsonpath("$.framedRoute");
+                vars.all = doc;
+            }
+        }
+
+        # Find clients stored to the RadiatorDB
+        query "POPULATE_CLIENTS" {
+            collection "clients";
+
+            mapping {
+                ipmap.network = doc | jsonpath("$.network");
+                ipmap.secret = doc | jsonpath("$.secret");
+                ipmap.name = key[0];
+            }
+        }
+
+        # Store sessions to the RadiatorDB
+        # As acct-session-id is unique within client, use 3 part key
+        # to guarantee the uniqueness
+        put "STORE_SESSIONS" {
+            key "%{aaa.identity}";
+            key "%{radius.request.attr.acct-session-id}";
+            key "%{radius.request.attr.NAS-Identifier}";
+            collection "sessions";
+            # bindings must match to the fields listed for the collection
+            bindings {
+                username = aaa.identity;
+                DateTime = radius.request.attr.Event-Timestamp;
+                Acct-Session-Id = radius.request.attr.acct-session-id;
+                # Store Acct-Status-Type as string instead of number
+                Acct-Status-Type = "%{radius.request.attr.acct-status-type}";
+                Acct-Delay-Time = radius.request.attr.acct-delay-time;
+                Acct-Input-Octets = radius.request.attr.acct-input-octets;
+                Acct-Output-Octets = radius.request.attr.acct-output-octets;
+                Acct-Input-Gigawords   = radius.request.attr.acct-input-gigawords;
+                Acct-Output-Gigawords  = radius.request.attr.acct-output-gigawords;
+                Acct-Session-Time = radius.request.attr.acct-session-time;
+                Acct-Terminate-Cause = radius.request.attr.acct-terminate-cause;
+                NAS-Identifier = radius.request.attr.NAS-Identifier;
+                NAS-Port = radius.request.attr.NAS-Port;
+                Framed-IP-Address = radius.request.attr.Framed-IP-Address;
+            }
+        }
+
+        # Define what the RadiatorDB contains with collections, and list the fields
+        # each document inside collection shows. The order of fields here define the
+        # order the data is shown on RadiatorDB view
+        # Each collection has roles definition that shows the permissions needed to read and write to the collection
+
+        # Clients are stored to RadiatorDB
+        collection "clients" {
+            roles {
+                read "operations";
+                write "admin";
+            }
+            name "NAS Clients";
+            description "NAS Clients recognized by the RADIUS server";
+            key {
+                field  {
+                    name "Client identifier";
+                    type text;
+                }
+            }
+
+            field "network" {
+                name "Client CIDR network";
+                type network;
+                required true;
+            }
+
+            field "secret" {
+                name "RADIUS shared secret";
+                type secret;
+                required true;
+            }
+
+            field "messageAuthenticator" {
+                name "Require message authenticator?";
+                type boolean;
+                required true;
+            }
+        }
+
+        # Subscribers are stored to RadiatorDB
+        collection "subscribers" {
+            roles {
+                read "operations";
+                write "admin";
+            }
+            name "Subscribers";
+            description "Subscriber information";
+
+            key {
+                field {
+                    name "Username";
+                    type text;
+                }
+            }
+
+            field "passwordHash" {
+                name "Password Hash";
+                type password;
+                required true;
+            }
+
+            field "framedIPAddress" {
+                name "Framed IP Address";
+                type ip;
+            }
+            field "framedIPNetmask" {
+                name "Framed IP Netmask";
+                type text;
+            }
+            field "framedRoute" {
+                name "Framed Route";
+                type text;
+            }
+
+            field "enabled" {
+                name "Enabled";
+                type boolean;
+                default true;
+            }
+        }
+
+        # Sessions to RadiatorDB
+        collection "sessions" {
+            roles {
+                read "operations";
+                write "admin";
+            }
+            name "Sessions";
+            description "Sessions db keeps records of the user sessions using User name/Accounting sessions ID/NAS as key";
+
+            key {
+                field {
+                    name "Username";
+                    type text;
+                }
+                field {
+                    name "Acct ID";
+                    type text;
+                }
+                field {
+                    name "NAS ID";
+                    type text;
+                }
+            }
+            field "username" {
+                name "User Name";
+                type text;
+            }
+            field "Timestamp" {
+                name "Timestamp";
+                type datetime;
+            }
+            field "Calling-Station-Id" {
+                name "Calling-Station";
+                type text;
+            }
+            field "Acct-Session-Id" {
+                name "Accounting Session ID";
+                type text;
+            }
+            field "NAS-Identifier" {
+                name "NAS Identifier";
+                type text;
+            }
+            field "DateTime" {
+                name "Event Timestamp";
+                type datetime;
+                required true;
+            }
+            field "Acct-Status-Type" {
+                name "Accounting Status Type";
+                type text;
+            }
+            field "Acct-Delay-Time" {
+                name "Accounting Delay Time";
+                type number;
+            }
+            field "Acct-Input-Octets" {
+                name "Accounting Input Octets";
+                type number;
+            }
+            field "Acct-Output-Octets" {
+                name "Accounting Output Octets";
+                type number;
+            }
+            field "Acct-Input-Gigawords" {
+                name "Acct-Input-Gigawords";
+                type number;
+            }
+            field "Acct-Output-Gigawords" {
+                name "Acct-Output-Gigawords";
+                type number;
+            }
+            field "Acct-Session-Time" {
+                name "Accounting Session Time";
+                type number;
+            }
+            field "Acct-Terminate-Cause" {
+                name "Accounting Terminate Cause";
+                type text;
+            }
+            field "NAS-Port" {
+                name "NAS Port";
+                type number;
+            }
+            field "Framed-IP-Address" {
+                name "Framed IP Address";
+                type ip;
+            }
+        }
+    }
+
+    # Populate the clients from RadiatorDB
+    # The interval block defines how fast newly added client is taken into use
+    ipmap "RADIUS_CLIENTS" {
+        # Re-run the @populate pipeline every 5 minutes to refresh the map
+        # with a random delay of up to 30 seconds to avoid thundering herd
+        interval {
+            duration 5m;
+            random 30s;
+        }
+
+        query "CHECK_NAS_IP_ADDRESS" {
+            lookup radius.client.ip;
+            mapping {
+                radius.client.secret = secret;
+            }
+        }
+
+        @populate {
+            backend {
+                name "RADIATORDB";
+                query "POPULATE_CLIENTS";
+            }
+        }
+    }
+}
+

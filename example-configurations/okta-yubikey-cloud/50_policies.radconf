@@ -1,0 +1,149 @@
+# 50_policies.radconf
+#
+# Radiator policy configuration
+#
+
+aaa {
+    # first matching policy is selected so for all accounting
+    # to be processed within its own policy, it should
+    # be the first one and match all accounting requests
+    policy "ACCOUNTING" {
+
+        conditions all {
+            # match all accounting requests
+            radius.request.code == radius.ACCOUNTING_REQUEST;
+        }
+
+        handler "ACCOUNTING" {
+            conditions all {
+                # match only RADIUS accounting requests
+                radius.request.code == radius.ACCOUNTING_REQUEST;
+            }
+
+            @execute {
+                # accept all accounting
+                accept;
+            }
+
+            # log all accounting
+            @final_execute {
+                invoke "LOG_ACCOUNTING";
+            }
+        }
+    }
+
+    policy "AUTHENTICATION" {
+        # match only RADIUS authentication requests so that other requests
+        # are handled by the DEFAULT policy
+        conditions all {
+            radius.request.code == radius.ACCESS_REQUEST;
+        }
+
+        handler "AUTHENTICATION" {
+            conditions all {
+                radius.request.code == radius.ACCESS_REQUEST;
+            }
+
+            @execute {
+                invoke "SET_TENANT_INFORMATION";
+                invoke "SET_YUBIKEY_INFORMATION";
+
+                # Extract the YubiKey public UID once before the user lookup so malformed OTPs
+                # fail as normal authentication rejects instead of backend errors.
+                vars.presented_yubikey_public_uid = radius.request.password | yubikey("password_otp", "public_uid") | recover(none);
+
+                if all {
+                    vars.presented_yubikey_public_uid == none;
+                } then {
+                    reject "Malformed YubiKey OTP";
+                }
+
+                # Check the Yubikey belongs to the user authenticating
+                backend {
+                    name "JSONFILE_USERS_YUBIKEY_UID";
+                    query "FIND_UID";
+                }
+
+                if any {
+                    vars.presented_yubikey_public_uid != vars.yubikey-uid;
+                } then {
+                    reason "Yubikey does not belong to this user";
+                    reject;
+                }
+
+                # Okta ROPC authentication with username and password
+                try {
+                    backend {
+                        name "OKTA_ROPC";
+                        query "AUTH_USERS";
+                    }
+                }
+
+                # Check if the backend call failed, return reject if so
+                if all {
+                    aaa.caught_error != none;
+                } then {
+                    reason aaa.caught_error;
+                    reject;
+                }
+
+                # Validate with YubiKey Cloud (last 44 characters)
+                backend {
+                    name "YUBIKEY_CLOUD";
+                    secret radius.request.password | yubikey("password_otp", "otp");
+                }
+
+                ## Match user groups from Okta, optional
+                #map user.group {
+                #    "Staff" => {
+                #        radius.reply.attr.filter-id = "Staff";
+                #        reason "Matched group Staff.";
+                #        accept;
+                #    }
+                #    "Students" => {
+                #        radius.reply.attr.filter-id = "Students";
+                #        reason "Matched group Students.";
+                #        accept;
+                #    }
+                #   any => {
+                #        reason "None of user groups matched, so the authentication is rejected.";
+                #        reject;
+                #    }
+                #}
+            }
+            @final_execute {
+                invoke "LOG_AUTHENTICATION";
+            }
+        }
+    }
+
+    # DEFAULT policy is to reject authentication and accept accounting
+    # matches if none of the previous policies match
+    policy "DEFAULT" {
+
+        # a policy without conditions will handle any request
+
+        # DEFAULT handler rejects all authentication, accepts accounting
+        handler "DEFAULT" {
+            conditions any {
+                radius.request.code == any;
+            }
+            @execute {
+                if all {
+                    radius.request.code == radius.ACCOUNTING_REQUEST;
+                } then {
+                    accept;
+                } else {
+                    reason "DEFAULT: No other matching authentication handler found.";
+                    reject;
+                }
+            }
+            # Logging to both authentication and accounting logs so it's noticed this
+            # policy triggers
+            @final_execute {
+                invoke "LOG_ACCOUNTING";
+                invoke "LOG_AUTHENTICATION";
+            }
+        }
+    }
+}

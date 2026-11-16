@@ -1,0 +1,10 @@
+# 19_caches.radconf
+# Cache configuration for storing groups queried from LDAP
+#
+
+caches {
+    cache "groups" {
+        # Entries expire after 600 seconds (without timeout they never expire)
+        timeout 600000;
+    }
+}

@@ -1,0 +1,24 @@
+aaa {
+    policy "MANAGEMENT_POLICY" {
+        conditions all {
+            aaa.protocol == protocol.MANAGEMENT;
+        }
+
+        handler "AUTHENTICATION" {
+            @execute {
+                http_management_authentication {
+                    @resolve {
+                        backend {
+                            name "MANAGEMENT_USERS";
+                            query "FIND_USER";
+                        }
+                    }
+
+                    @verify {
+                        http_basic_auth;
+                    }
+                }
+            }
+        }
+    }
+}

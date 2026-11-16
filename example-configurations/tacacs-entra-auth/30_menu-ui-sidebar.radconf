@@ -1,0 +1,23 @@
+ui {
+    sidebar {
+        section "Management";
+        item "Management users" {
+            url "/configuration/files/details/?filename=management%2Fmanagement-users.json5&template-hint=management-users.json5.radtmpl";
+            icon "LockOpen";
+        }
+
+        section "Configuration";
+        item "Entra details" {
+            url "/configuration/files/details/?filename=25_pipeline-entra-credentials.radconf";
+            icon "Assignment";
+        }
+        item "TACACS+ clients" {
+            url "/configuration/files/details/?filename=40_clients-tacacsplus.radconf";
+            icon "Router";
+        }
+        item "TACACS+ authorization rules" {
+            url "/configuration/files/details/?filename=50_tacacs-authorization-rules.radconf";
+            icon "Rule";
+        }
+    }
+}

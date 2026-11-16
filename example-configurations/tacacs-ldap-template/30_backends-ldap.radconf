@@ -1,0 +1,81 @@
+backends {
+    # LDAP backend
+    ldap "LDAPSERVER" {
+        # LDAP server
+        server "ldap" {
+            # LDAP URL
+            url "ldap://<ldap_server_address>:389/";
+
+            # Operation timeout in milliseconds
+            timeout 3000;
+
+            # Maximum shared connections; binds use a separate exclusive pool
+            connections { max 10; }
+
+            # (Optional) Authentication
+            authentication {
+                # Basic bind authentication
+                dn "cn=manager,dc=example,dc=com";
+                password "<manager_password>";
+            }
+
+            # (Optional) TLS client configuration
+            #tls {
+            #    # LDAP client's certificate
+            #    #certificate "ldap.client.cert";
+            #
+            #    # LDAP client's private key
+            #    #certificate_key "ldap.client.key";
+            #
+            #    # LDAP client's certificate's root CA
+            #    #client_ca_certificate "ldap.client.ca";
+            #
+            #    # LDAP server's certificate's root CA
+            #    #server_ca_certificate "ldap.server.ca";
+            #
+            #    # Custom certificate verification rules are not supported for LDAP server
+            #}
+        }
+
+        # A single backend can have multiple LDAP servers configured
+        #server "ldap2" {
+        #   ...
+        #}
+
+        # LDAP operations
+
+        # LDAP search operation named "find_user"
+        search "find_user" {
+            base "ou=People,dc=example,dc=com";
+            scope sub;
+            filter "cn=%{tacacsplus.request.user}";
+
+            # (Optional) Per search authentication instead of the server authentication
+            #authentication {
+            #    # Basic bind authentication
+            #    # Both dn and password parameter support %{...} attribute templates
+            #    dn "uid=%{tacacsplus.request.user},dc=example,dc=com";
+            #    password "%{auth.response}";
+            #}
+
+            # Result value mapping
+            mapping {
+                user.username = cn;
+                user.password = userPassword;
+            }
+        }
+
+        # LDAP search operation named "user_groups"
+        search "user_groups" {
+            base "ou=Groups,dc=example,dc=com";
+            scope sub;
+            #filter "(&(objectClass=groupOfNames)(Member=cn=%{user.username},ou=Groups,dc=example,dc=com))";
+            filter "(&(objectClass=posixGroup)(memberUid=%{user.username}))";
+
+            # Result values mapping
+            mapping {
+                user.group += cn;
+            }
+        }
+    }
+}
